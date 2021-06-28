@@ -16,8 +16,11 @@ type Dirent = typeof fs.Dirent;
 let win: BrowserWindow;
 
 function onReady () {
+    let width = 1280;
+    if (serve)
+	width *= 1.5;
     win = new electron.BrowserWindow({
-	width: 900, height: 6700,
+	width: width, height: 720,
 	webPreferences: {
 	    nodeIntegration: true,
 	    contextIsolation: false
