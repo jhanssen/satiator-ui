@@ -2,6 +2,7 @@ const electron = require('electron');
 const url = require('url');
 const path = require('path');
 const fs = require('fs');
+const nodefetch = require('node-fetch');
 
 const app = electron.app;
 const ipcMain = electron.ipcMain;
@@ -45,25 +46,74 @@ function onReady () {
 
 app.on('ready', onReady);
 
-function isRoot() {
-    return path.parse(process.cwd()).root == process.cwd();
-}
+let currentDir = process.cwd();
 
-function getDirectory() {
-    fs.readdir('.', { withFileTypes: true }, (err: Error | null, files: Dirent[]) => {
+function getDirectory(dir: string) {
+    currentDir = path.resolve(currentDir, dir);
+    fs.readdir(currentDir, { withFileTypes: true }, (err: Error | null, files: Dirent[]) => {
 	if (!err) {
 	    const directories = files
 		.filter(file => file.isDirectory())
 		.map(file => file.name);
-	    if (!isRoot()) {
+	    if (process.cwd().length > 1) {
 		directories.unshift('..');
 	    }
-	    win.webContents.send("getDirectoryResponse", directories);
+	    win.webContents.send("getDirectoryResponse", { directories: directories });
+	} else {
+	    win.webContents.send("getDirectoryResponse", { error: err });
 	}
     });
 }
 
+function readFile(file: string) {
+    let rfile = file;
+    if (rfile[0] !== '/')
+	rfile = path.resolve(currentDir, rfile);
+    fs.readFile(rfile, (err: Error | null, data: Buffer) => {
+	if (!err) {
+	    win.webContents.send("fetchResponse", { file: file, data: data });
+	} else {
+	    win.webContents.send("fetchResponse", { file: file, error: err });
+	}
+    });
+}
+
+function fetchFile(file: string) {
+    nodefetch(file)
+	.then((res: any) => res.buffer())
+	.then((buffer: Buffer) => {
+	    win.webContents.send("fetchResponse", { file: file, data: buffer });
+	})
+	.catch((err: Error) => {
+	    win.webContents.send("fetchResponse", { file: file, error: err });
+	});
+}
+
 ipcMain.on("navigateDirectory", (event: ElectronEvent, path: string) => {
-    process.chdir(path);
-    getDirectory();
+    getDirectory(path);
+});
+
+ipcMain.on("fetch", (event: ElectronEvent, path: string) => {
+    const protoIdx = path.indexOf("://");
+    if (protoIdx == -1)
+	readFile(path);
+    const proto = path.substr(0, protoIdx);
+    if (proto === "file") {
+	readFile(path.substr(protoIdx));
+    } else {
+	fetchFile(path);
+    }
+});
+
+ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer) => {
+    let wfile = file;
+    if (wfile[0] !== '/')
+	wfile = path.resolve(currentDir, wfile);
+    fs.writeFile(wfile, data, (err: Error | null) => {
+	if (err) {
+	    win.webContents.send("writeResponse", { file: file, error: err });
+	} else {
+	    win.webContents.send("writeResponse", { file: file });
+	}
+    });
 });
