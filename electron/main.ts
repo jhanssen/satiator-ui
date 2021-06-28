@@ -106,16 +106,41 @@ function getDirectory(dir: string) {
 	sendRequest(0);
 }
 
-function readFile(file: string, app?: boolean) {
+function readFile(reqname: string, file: string, app?: boolean) {
     let rfile = file;
     if (rfile[0] !== '/' && !app)
 	rfile = path.resolve(currentDir, rfile);
     fs.readFile(rfile, (err: Error | null, data: Buffer) => {
 	if (!err) {
-	    win.webContents.send("fetchResponse", { file: file, data: data });
+	    win.webContents.send(reqname, { file: file, data: data });
 	} else {
-	    win.webContents.send("fetchResponse", { file: file, error: err });
+	    win.webContents.send(reqname, { file: file, error: err });
 	}
+    });
+}
+
+function readPartialFile(file: string, offset?: number, size?: number, app?: boolean) {
+    let rfile = file;
+    if (rfile[0] !== '/' && !app)
+	rfile = path.resolve(currentDir, rfile);
+    fs.open(rfile, (err: Error | null, fd: number) => {
+	if (err) {
+	    win.webContents.send("readPartialFileResponse", { file: file, error: err });
+	    return;
+	}
+	const sz = typeof size === "undefined" ? 16384 : size;
+	const buf = Buffer.alloc(sz);
+	fs.read(fd, buf, 0, sz, offset || 0, (err: Error | null, bytesRead: number, buffer: Buffer) => {
+	    try {
+		if (err)
+		    throw err;
+		fs.closeSync(fd);
+	    } catch (e) {
+		win.webContents.send("readPartialFileResponse", { file: file, error: e });
+		return;
+	    }
+	    win.webContents.send("readPartialFileResponse", { file: file, data: buffer, size: bytesRead });
+	});
     });
 }
 
@@ -137,15 +162,23 @@ ipcMain.on("navigateDirectory", (event: ElectronEvent, path: string) => {
 ipcMain.on("fetch", (event: ElectronEvent, path: string, app?: boolean) => {
     const protoIdx = path.indexOf("://");
     if (protoIdx == -1) {
-	readFile(path, app);
+	readFile("fetchResponse", path, app);
     } else {
 	const proto = path.substr(0, protoIdx);
 	if (proto === "file") {
-	    readFile(path.substr(protoIdx), app);
+	    readFile("fetchResponse", path.substr(protoIdx), app);
 	} else {
 	    fetchFile(path);
 	}
     }
+});
+
+ipcMain.on("readFile", (event: ElectronEvent, path: string, app?: boolean) => {
+    readFile("readFileResponse", path, app);
+});
+
+ipcMain.on("readPartialFile", (event: ElectronEvent, path: string, offset?: number, size?: number, app?: boolean) => {
+    readPartialFile(path, offset, size, app);
 });
 
 ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer, app?: boolean) => {
