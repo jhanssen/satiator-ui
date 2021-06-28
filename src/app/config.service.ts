@@ -3,6 +3,7 @@ import { ReplaySubject } from 'rxjs';
 const electron = (<any>window).require('electron');
 
 interface FetchResponse {
+    id: number;
     file: string;
     error?: Error;
     data?: Buffer;
@@ -51,7 +52,7 @@ export class ConfigService {
 		}
 	    }
 	});
-	electron.ipcRenderer.send("fetch", "config.json", true);
+	electron.ipcRenderer.send("fetch", 0, "config.json", true);
     }
 
     getValue(name: string): ReplaySubject<ConfigValue> {
@@ -66,7 +67,7 @@ export class ConfigService {
     setValue(name: string, value: ConfigValue) {
 	if (this.data) {
 	    this.data[name] = value;
-	    electron.ipcRenderer.send("write", "config.json", Buffer.from(JSON.stringify(this.data) + "\n", "utf8"), true);
+	    electron.ipcRenderer.send("write", 0, "config.json", Buffer.from(JSON.stringify(this.data) + "\n", "utf8"), true);
 
 	    const s = this.subjects[name];
 	    if (s) {
@@ -94,6 +95,6 @@ export class ConfigService {
 	this.requests = [];
 
 	if (written)
-	    electron.ipcRenderer.send("write", "config.json", Buffer.from(JSON.stringify(this.data) + "\n", "utf8"));
+	    electron.ipcRenderer.send("write", 0, "config.json", Buffer.from(JSON.stringify(this.data) + "\n", "utf8"));
     }
 }

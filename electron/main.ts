@@ -50,7 +50,7 @@ app.on('ready', onReady);
 let currentDir = process.cwd();
 let getDirectoryReqs: string[] = [];
 
-function getDirectory(dir: string) {
+function getDirectory(id: number, dir: string) {
     // console.log("getDirectory", dir);
     getDirectoryReqs.push(dir);
     const sendRequest = (reqidx: number) => {
@@ -75,7 +75,7 @@ function getDirectory(dir: string) {
 		}
 		const processDir = () => {
 		    if (rem.length === 0) {
-			win.webContents.send("getDirectoryResponse", { files: files, directories: directories, current: currentDir });
+			win.webContents.send("getDirectoryResponse", { id: id, files: files, directories: directories, current: currentDir });
 			process.nextTick(() => { sendRequest(reqidx + 1); });
 			return;
 		    }
@@ -97,7 +97,7 @@ function getDirectory(dir: string) {
 		};
 		processDir();
 	    } else {
-		win.webContents.send("getDirectoryResponse", { error: err });
+		win.webContents.send("getDirectoryResponse", { id: id, error: err });
 		process.nextTick(() => { sendRequest(reqidx + 1); });
 	    }
 	});
@@ -106,26 +106,26 @@ function getDirectory(dir: string) {
 	sendRequest(0);
 }
 
-function readFile(reqname: string, file: string, app?: boolean) {
+function readFile(reqname: string, id: number, file: string, app?: boolean) {
     let rfile = file;
     if (rfile[0] !== '/' && !app)
 	rfile = path.resolve(currentDir, rfile);
     fs.readFile(rfile, (err: Error | null, data: Buffer) => {
 	if (!err) {
-	    win.webContents.send(reqname, { file: file, data: data });
+	    win.webContents.send(reqname, { id: id, file: file, data: data });
 	} else {
-	    win.webContents.send(reqname, { file: file, error: err });
+	    win.webContents.send(reqname, { id: id, file: file, error: err });
 	}
     });
 }
 
-function readPartialFile(file: string, size?: number, offset?: number, app?: boolean) {
+function readPartialFile(id: number, file: string, size?: number, offset?: number, app?: boolean) {
     let rfile = file;
     if (rfile[0] !== '/' && !app)
 	rfile = path.resolve(currentDir, rfile);
     fs.open(rfile, (err: Error | null, fd: number) => {
 	if (err) {
-	    win.webContents.send("readPartialFileResponse", { file: file, error: err });
+	    win.webContents.send("readPartialFileResponse", { id: id, file: file, error: err });
 	    return;
 	}
 	const sz = typeof size === "undefined" ? 16384 : size;
@@ -136,60 +136,60 @@ function readPartialFile(file: string, size?: number, offset?: number, app?: boo
 		    throw err;
 		fs.closeSync(fd);
 	    } catch (e) {
-		win.webContents.send("readPartialFileResponse", { file: file, error: e });
+		win.webContents.send("readPartialFileResponse", { id: id, file: file, error: e });
 		return;
 	    }
-	    win.webContents.send("readPartialFileResponse", { file: file, data: buffer, size: bytesRead });
+	    win.webContents.send("readPartialFileResponse", { id: id, file: file, data: buffer, size: bytesRead });
 	});
     });
 }
 
-function fetchFile(file: string) {
+function fetchFile(id: number, file: string) {
     nodefetch(file)
 	.then((res: any) => res.buffer())
 	.then((buffer: Buffer) => {
-	    win.webContents.send("fetchResponse", { file: file, data: buffer });
+	    win.webContents.send("fetchResponse", { id: id, file: file, data: buffer });
 	})
 	.catch((err: Error) => {
-	    win.webContents.send("fetchResponse", { file: file, error: err });
+	    win.webContents.send("fetchResponse", { id: id, file: file, error: err });
 	});
 }
 
-ipcMain.on("navigateDirectory", (event: ElectronEvent, path: string) => {
-    getDirectory(path);
+ipcMain.on("navigateDirectory", (event: ElectronEvent, id: number, path: string) => {
+    getDirectory(id, path);
 });
 
-ipcMain.on("fetch", (event: ElectronEvent, path: string, app?: boolean) => {
+ipcMain.on("fetch", (event: ElectronEvent, id: number, path: string, app?: boolean) => {
     const protoIdx = path.indexOf("://");
     if (protoIdx == -1) {
-	readFile("fetchResponse", path, app);
+	readFile("fetchResponse", id, path, app);
     } else {
 	const proto = path.substr(0, protoIdx);
 	if (proto === "file") {
-	    readFile("fetchResponse", path.substr(protoIdx), app);
+	    readFile("fetchResponse", id, path.substr(protoIdx), app);
 	} else {
-	    fetchFile(path);
+	    fetchFile(id, path);
 	}
     }
 });
 
-ipcMain.on("readFile", (event: ElectronEvent, path: string, app?: boolean) => {
-    readFile("readFileResponse", path, app);
+ipcMain.on("readFile", (event: ElectronEvent, id: number, path: string, app?: boolean) => {
+    readFile("readFileResponse", id, path, app);
 });
 
-ipcMain.on("readPartialFile", (event: ElectronEvent, path: string, size?: number, offset?: number, app?: boolean) => {
-    readPartialFile(path, size, offset, app);
+ipcMain.on("readPartialFile", (event: ElectronEvent, id: number, path: string, size?: number, offset?: number, app?: boolean) => {
+    readPartialFile(id, path, size, offset, app);
 });
 
-ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer, app?: boolean) => {
+ipcMain.on("write", (event: ElectronEvent, id: number, file: string, data: Buffer, app?: boolean) => {
     let wfile = file;
     if (wfile[0] !== '/' && !app)
 	wfile = path.resolve(currentDir, wfile);
     fs.writeFile(wfile, data, (err: Error | null) => {
 	if (err) {
-	    win.webContents.send("writeResponse", { file: file, error: err });
+	    win.webContents.send("writeResponse", { id: id, file: file, error: err });
 	} else {
-	    win.webContents.send("writeResponse", { file: file });
+	    win.webContents.send("writeResponse", { id: id, file: file });
 	}
     });
 });

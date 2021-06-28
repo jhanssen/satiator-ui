@@ -4,6 +4,7 @@ import { Event } from 'electron';
 const electron = (<any>window).require('electron');
 
 interface DirectoryResponse {
+    id: number;
     current?: string;
     error?: Error;
     files?: string[];
@@ -31,6 +32,6 @@ export class BrowserService {
     }
 
     navigateDirectory(path: string) {
-	electron.ipcRenderer.send('navigateDirectory', path);
+	electron.ipcRenderer.send('navigateDirectory', 0, path);
     }
 }
