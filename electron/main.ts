@@ -48,26 +48,62 @@ function onReady () {
 app.on('ready', onReady);
 
 let currentDir = process.cwd();
+let getDirectoryReqs: string[] = [];
 
 function getDirectory(dir: string) {
-    currentDir = path.resolve(currentDir, dir);
-    fs.readdir(currentDir, { withFileTypes: true }, (err: Error | null, entries: Dirent[]) => {
-	if (!err) {
-	    const files = entries
-		.filter(file => file.isFile())
-		.filter(file => { const ext = path.extname(file.name); return ext === '.iso' || ext === '.cue'; })
-		.map(file => file.name);
-	    const directories = entries
-		.filter(file => file.isDirectory())
-		.map(file => file.name);
-	    if (process.cwd().length > 1) {
-		directories.unshift('..');
-	    }
-	    win.webContents.send("getDirectoryResponse", { files: files, directories: directories, current: currentDir });
-	} else {
-	    win.webContents.send("getDirectoryResponse", { error: err });
+    // console.log("getDirectory", dir);
+    getDirectoryReqs.push(dir);
+    const sendRequest = (reqidx: number) => {
+	if (reqidx >= getDirectoryReqs.length) {
+	    getDirectoryReqs = [];
+	    return;
 	}
-    });
+	const dir = getDirectoryReqs[reqidx];
+	currentDir = dir[0] === '/' ? dir : path.resolve(currentDir, dir);
+	fs.readdir(currentDir, { withFileTypes: true }, (err: Error | null, entries: Dirent[]) => {
+	    if (!err) {
+		let files = entries
+		    .filter(file => file.isFile())
+		    .filter(file => { const ext = path.extname(file.name); return ext === '.iso' || ext === '.cue'; })
+		    .map(file => path.resolve(currentDir, file.name));
+		const directories = entries
+		    .filter(file => file.isDirectory())
+		    .map(file => file.name);
+		let rem = directories.slice(0).map(file => path.resolve(currentDir, file));
+		if (process.cwd().length > 1) {
+		    directories.unshift('..');
+		}
+		const processDir = () => {
+		    if (rem.length === 0) {
+			win.webContents.send("getDirectoryResponse", { files: files, directories: directories, current: currentDir });
+			process.nextTick(() => { sendRequest(reqidx + 1); });
+			return;
+		    }
+		    const dir = rem.shift();
+		    fs.readdir(dir, { withFileTypes: true }, (err: Error | null, entries: Dirent[]) => {
+			if (!err) {
+			    const subdirectories = entries
+				.filter(file => file.isDirectory())
+				.map(file => path.resolve(dir, file.name));
+			    rem = rem.concat(subdirectories);
+
+			    files = files.concat(entries
+				.filter(file => file.isFile())
+				.filter(file => { const ext = path.extname(file.name); return ext === '.iso' || ext === '.cue'; })
+				.map(file => path.resolve(dir, file.name)));
+			}
+			process.nextTick(processDir);
+		    });
+		};
+		processDir();
+	    } else {
+		win.webContents.send("getDirectoryResponse", { error: err });
+		process.nextTick(() => { sendRequest(reqidx + 1); });
+	    }
+	});
+    };
+    if (getDirectoryReqs.length === 1)
+	sendRequest(0);
 }
 
 function readFile(file: string, app?: boolean) {
