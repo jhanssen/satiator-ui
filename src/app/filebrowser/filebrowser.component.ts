@@ -2,11 +2,11 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { BrowserService } from '../browser.service';
 
 @Component({
-    selector: 'app-browser',
-    templateUrl: './browser.component.html',
-    styleUrls: ['./browser.component.css']
+    selector: 'app-filebrowser',
+    templateUrl: './filebrowser.component.html',
+    styleUrls: ['./filebrowser.component.css']
 })
-export class BrowserComponent implements OnInit {
+export class FileBrowserComponent implements OnInit {
     directory: string[];
 
     constructor(private browserService: BrowserService, private cdr: ChangeDetectorRef) {
