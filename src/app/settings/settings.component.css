@@ -1,0 +1,4 @@
+div.height { display: flex; flex-direction: column; height: 100%; }
+div.buttons { display: flex; }
+div.button { margin: 10px; }
+div.scroll { overflow-y: scroll; }

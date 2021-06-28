@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 import { Event } from 'electron';
 const electron = (<any>window).require('electron');
 
@@ -15,9 +15,9 @@ interface DirectoryResponse {
     providedIn: 'root'
 })
 export class BrowserService {
-    current = new BehaviorSubject<string|undefined>(undefined);
-    file = new BehaviorSubject<string[]>([]);
-    directory = new BehaviorSubject<string[]>([]);
+    current = new ReplaySubject<string>();
+    file = new ReplaySubject<string[]>();
+    directory = new ReplaySubject<string[]>();
 
     constructor() {
 	electron.ipcRenderer.on('getDirectoryResponse', (event: Event, directory: DirectoryResponse) => {

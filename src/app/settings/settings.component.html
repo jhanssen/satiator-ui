@@ -1,5 +1,22 @@
-<app-filebrowser #filebrowser></app-filebrowser>
-<div class="buttons">
-  <button mat-raised-button color="primary" (click)="save()">OK</button>
-  <button mat-raised-button (click)="cancel()">Cancel</button>
+<div class="height">
+  <mat-toolbar color="primary">
+    <mat-toolbar-row>
+      {{ this.current }}
+    </mat-toolbar-row>
+  </mat-toolbar>
+  <div class="scroll">
+    <app-filebrowser #filebrowser></app-filebrowser>
+  </div>
+  <mat-toolbar color="primary">
+    <mat-toolbar-row>
+      <div class="buttons">
+	<div class="button">
+	  <button mat-raised-button color="accent" (click)="save()">OK</button>
+	</div>
+	<div class="button">
+	  <button mat-raised-button (click)="cancel()">Cancel</button>
+	</div>
+      </div>
+    </mat-toolbar-row>
+  </mat-toolbar>
 </div>

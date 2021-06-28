@@ -1,5 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FileBrowserComponent } from '../filebrowser/filebrowser.component';
+import { BrowserService } from '../browser.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -8,15 +9,21 @@ import { Router } from '@angular/router';
     styleUrls: ['./settings.component.css']
 })
 export class SettingsComponent implements OnInit {
-    @ViewChild('filebrowser') private fileBrowser!: FileBrowserComponent;
+    @ViewChild('filebrowser') filebrowser!: FileBrowserComponent;
+    current: string|undefined;
 
-    constructor(private router: Router) { }
+    constructor(private browserService: BrowserService, private cdr: ChangeDetectorRef, private router: Router) {
+	this.browserService.current.subscribe((value) => {
+	    this.current = value;
+	    this.cdr.detectChanges();
+	});
+    }
 
     ngOnInit(): void {
     }
 
     save() {
-	this.fileBrowser.save();
+	this.filebrowser.save();
 	this.router.navigate(['/']);
     }
 

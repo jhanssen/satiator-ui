@@ -22,6 +22,7 @@ export class FileBrowserComponent implements OnInit {
 	});
 	this.browserService.current.subscribe((value) => {
 	    this.current = value;
+	    this.cdr.detectChanges();
 	});
     }
 
