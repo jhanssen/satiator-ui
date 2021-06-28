@@ -24,7 +24,8 @@ function onReady () {
 	width: width, height: 720,
 	webPreferences: {
 	    nodeIntegration: true,
-	    contextIsolation: false
+	    contextIsolation: false,
+	    allowRunningInsecureContent: serve ? true : false
 	}
     });
     if (serve) {
@@ -50,24 +51,28 @@ let currentDir = process.cwd();
 
 function getDirectory(dir: string) {
     currentDir = path.resolve(currentDir, dir);
-    fs.readdir(currentDir, { withFileTypes: true }, (err: Error | null, files: Dirent[]) => {
+    fs.readdir(currentDir, { withFileTypes: true }, (err: Error | null, entries: Dirent[]) => {
 	if (!err) {
-	    const directories = files
+	    const files = entries
+		.filter(file => file.isFile())
+		.filter(file => { const ext = path.extname(file.name); return ext === '.iso' || ext === '.cue'; })
+		.map(file => file.name);
+	    const directories = entries
 		.filter(file => file.isDirectory())
 		.map(file => file.name);
 	    if (process.cwd().length > 1) {
 		directories.unshift('..');
 	    }
-	    win.webContents.send("getDirectoryResponse", { directories: directories });
+	    win.webContents.send("getDirectoryResponse", { files: files, directories: directories, current: currentDir });
 	} else {
 	    win.webContents.send("getDirectoryResponse", { error: err });
 	}
     });
 }
 
-function readFile(file: string) {
+function readFile(file: string, app?: boolean) {
     let rfile = file;
-    if (rfile[0] !== '/')
+    if (rfile[0] !== '/' && !app)
 	rfile = path.resolve(currentDir, rfile);
     fs.readFile(rfile, (err: Error | null, data: Buffer) => {
 	if (!err) {
@@ -93,21 +98,23 @@ ipcMain.on("navigateDirectory", (event: ElectronEvent, path: string) => {
     getDirectory(path);
 });
 
-ipcMain.on("fetch", (event: ElectronEvent, path: string) => {
+ipcMain.on("fetch", (event: ElectronEvent, path: string, app?: boolean) => {
     const protoIdx = path.indexOf("://");
-    if (protoIdx == -1)
-	readFile(path);
-    const proto = path.substr(0, protoIdx);
-    if (proto === "file") {
-	readFile(path.substr(protoIdx));
+    if (protoIdx == -1) {
+	readFile(path, app);
     } else {
-	fetchFile(path);
+	const proto = path.substr(0, protoIdx);
+	if (proto === "file") {
+	    readFile(path.substr(protoIdx), app);
+	} else {
+	    fetchFile(path);
+	}
     }
 });
 
-ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer) => {
+ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer, app?: boolean) => {
     let wfile = file;
-    if (wfile[0] !== '/')
+    if (wfile[0] !== '/' && !app)
 	wfile = path.resolve(currentDir, wfile);
     fs.writeFile(wfile, data, (err: Error | null) => {
 	if (err) {
@@ -116,4 +123,8 @@ ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer) => {
 	    win.webContents.send("writeResponse", { file: file });
 	}
     });
+});
+
+ipcMain.on("log", (event: ElectronEvent, ...data: any) => {
+    console.log.call(console.log, ...data);
 });

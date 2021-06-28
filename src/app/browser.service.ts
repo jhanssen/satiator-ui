@@ -4,7 +4,9 @@ import { Event } from 'electron';
 const electron = (<any>window).require('electron');
 
 interface DirectoryResponse {
+    current?: string;
     error?: Error;
+    files?: string[];
     directories?: string[];
 }
 
@@ -12,6 +14,8 @@ interface DirectoryResponse {
     providedIn: 'root'
 })
 export class BrowserService {
+    current = new BehaviorSubject<string|undefined>(undefined);
+    file = new BehaviorSubject<string[]>([]);
     directory = new BehaviorSubject<string[]>([]);
 
     constructor() {
@@ -19,6 +23,10 @@ export class BrowserService {
 	    if (directory.directories) {
 		this.directory.next(directory.directories);
 	    }
+	    if (directory.files) {
+		this.file.next(directory.files);
+	    }
+	    this.current.next(directory.current);
 	});
     }
 
