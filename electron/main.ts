@@ -3,6 +3,8 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 const nodefetch = require('node-fetch');
+const hash = require('sha1-file');
+const xmlParser = require('fast-xml-parser');
 
 const app = electron.app;
 const ipcMain = electron.ipcMain;
@@ -119,6 +121,17 @@ function readFile(reqname: string, id: number, file: string, app?: boolean) {
     });
 }
 
+function hashFile(id: number, file: string, app?: boolean) {
+    let rfile = file;
+    if (rfile[0] !== '/' && !app)
+	rfile = path.resolve(currentDir, rfile);
+    hash(rfile).then((sha: string) => {
+	win.webContents.send("hashFileResponse", { id: id, file: file, hash: sha });
+    }).catch((err: Error) => {
+	win.webContents.send("hashFileResponse", { id: id, file: file, error: err });
+    });
+}
+
 function readPartialFile(id: number, file: string, size?: number, offset?: number, app?: boolean) {
     let rfile = file;
     if (rfile[0] !== '/' && !app)
@@ -173,12 +186,22 @@ ipcMain.on("fetch", (event: ElectronEvent, id: number, path: string, app?: boole
     }
 });
 
+ipcMain.on("hashFile", (event: ElectronEvent, id: number, path: string, app?: boolean) => {
+    hashFile(id, path, app);
+});
+
 ipcMain.on("readFile", (event: ElectronEvent, id: number, path: string, app?: boolean) => {
     readFile("readFileResponse", id, path, app);
 });
 
 ipcMain.on("readPartialFile", (event: ElectronEvent, id: number, path: string, size?: number, offset?: number, app?: boolean) => {
     readPartialFile(id, path, size, offset, app);
+});
+
+ipcMain.on("readRedump", (event: ElectronEvent) => {
+    fs.readFile("redump/redump.xml", { encoding: "utf8" }, (err: Error | null, data: string) => {
+	win.webContents.send("readRedumpResponse", { data: xmlParser.parse(data, { attrNodeName: "attr", ignoreAttributes: false }) });
+    });
 });
 
 ipcMain.on("write", (event: ElectronEvent, id: number, file: string, data: Buffer, app?: boolean) => {

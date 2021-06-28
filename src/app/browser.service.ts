@@ -26,9 +26,22 @@ interface ReadFileResponse {
     error?: Error;
 }
 
+interface HashFileResponse {
+    id: number;
+    file: string;
+    hash?: string;
+    error?: Error;
+}
+
 interface ReadRequest {
     id: number;
     resolve: (value: { data: Uint8Array, size: number } | PromiseLike<{ data: Uint8Array, size: number }>) => void;
+    reject: (error: any) => void;
+}
+
+interface HashRequest {
+    id: number;
+    resolve: (value: string | PromiseLike<string>) => void;
     reject: (error: any) => void;
 }
 
@@ -39,11 +52,14 @@ export class BrowserService {
     current = new ReplaySubject<string>();
     file = new ReplaySubject<string[]>();
     directory = new ReplaySubject<string[]>();
+    redump = new ReplaySubject<any>();
     private reads: ReadRequest[];
+    private hashes: HashRequest[];
     private readId: number;
 
     constructor() {
 	this.reads = [];
+	this.hashes = [];
 	this.readId = 0;
 
 	electron.ipcRenderer.on('getDirectoryResponse', (event: Event, directory: DirectoryResponse) => {
@@ -89,6 +105,27 @@ export class BrowserService {
 		}
 	    }
 	});
+	electron.ipcRenderer.on('hashFileResponse', (event: Event, read: HashFileResponse) => {
+	    const num = this.hashes.length;
+	    for (let i = 0; i < num; ++i) {
+		if (this.hashes[i].id === read.id) {
+		    if (read.error) {
+			this.hashes[i].reject(read.error);
+		    } else {
+			if (read.hash === undefined) {
+			    throw new Error("can't happen");
+			}
+			this.hashes[i].resolve(read.hash);
+		    }
+		    this.hashes.splice(i, 1);
+		    return;
+		}
+	    }
+	});
+	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { data: any }) => {
+	    this.redump.next(data.data.datafile);
+	});
+	electron.ipcRenderer.send('readRedump');
     }
 
     navigateDirectory(path: string) {
@@ -108,6 +145,14 @@ export class BrowserService {
 	return new Promise((resolve, reject) => {
 	    this.reads.push({ id: id, resolve: resolve, reject: reject });
 	    electron.ipcRenderer.send('readFile', id, path);
+	});
+    }
+
+    hashFile(path: string): Promise<string> {
+	const id = this.readId++;
+	return new Promise((resolve, reject) => {
+	    this.hashes.push({ id: id, resolve: resolve, reject: reject });
+	    electron.ipcRenderer.send('hashFile', id, path);
 	});
     }
 }

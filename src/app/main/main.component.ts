@@ -16,6 +16,7 @@ interface Game {
 })
 export class MainComponent implements OnInit {
     games: Game[];
+    redump: { [key: string]: { file: string, name: string } } | undefined;
 
     constructor(private browserService: BrowserService, private config: ConfigService, private cdr: ChangeDetectorRef) {
 	this.games = [];
@@ -24,6 +25,21 @@ export class MainComponent implements OnInit {
 	    console.log("got dir", dir);
 	    if (typeof dir === "string") {
 		this.browserService.navigateDirectory(dir);
+	    }
+	});
+	this.browserService.redump.subscribe((data) => {
+	    // convert this to something useful
+	    this.redump = {};
+	    for (const game of data.game) {
+		const name = game.attr["@_name"];
+		for (const rom of game.rom) {
+		    const sha1 = rom.attr["@_sha1"];
+		    const file = rom.attr["@_name"];
+
+		    this.redump[sha1] = {
+			file, name
+		    };
+		}
 	    }
 	});
     }
@@ -40,13 +56,17 @@ export class MainComponent implements OnInit {
 		    if (dot === -1)
 			continue;
 		    const ext = file.substr(dot).toLowerCase();
-		    this.browserService.readPartialFile(file, 2048).then(data => {
-			if (ext === ".iso") {
-			    this.addGame(i, this.parseSega(file, data.data, 0));
-			} else if (ext === ".bin") {
-			    this.addGame(i, this.parseSega(file, data.data, 16));
-			}
-			this.cdr.detectChanges();
+		    this.browserService.hashFile(file).then(sha1 => {
+			if (this.redump)
+			    console.log("got sha", sha1, this.redump[sha1]);
+			this.browserService.readPartialFile(file, 2048).then(data => {
+			    if (ext === ".iso") {
+				this.addGame(i, this.parseSega(file, data.data, 0));
+			    } else if (ext === ".bin") {
+				this.addGame(i, this.parseSega(file, data.data, 16));
+			    }
+			    this.cdr.detectChanges();
+			});
 		    });
 		}
 	    });
@@ -85,10 +105,11 @@ export class MainComponent implements OnInit {
 	};
 
 	// check that the data is what we expect
-	const sega = (new TextDecoder()).decode(new Uint8Array(data.buffer, offset + 16, 4));
-	if (sega === "SEGA") {
+	const decoder = new TextDecoder();
+	const sega = decoder.decode(new Uint8Array(data.buffer, offset, 16));
+	if (sega.indexOf("SEGA") === 0 && sega.indexOf("SATURN") !== -1) {
 	    // we good
-	    const game = (new TextDecoder()).decode(new Uint8Array(data.buffer, offset + 32, 16));
+	    const game = decoder.decode(new Uint8Array(data.buffer, offset + 32, 16));
 	    const { id, version } = parseGame(game);
 	    const { file, dir } = extractName();
 	    // console.log("got game", id, version, extractName());
