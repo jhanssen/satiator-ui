@@ -28,6 +28,7 @@ export class SettingsComponent implements OnInit {
     }
 
     cancel() {
+	this.filebrowser.cancel();
 	this.router.navigate(['/']);
     }
 }

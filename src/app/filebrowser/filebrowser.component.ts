@@ -10,6 +10,7 @@ import { ConfigService } from '../config.service';
 export class FileBrowserComponent implements OnInit {
     current: string|undefined;
     directory: string[];
+    private prev: string|undefined;
 
     constructor(private browserService: BrowserService, private config: ConfigService, private cdr: ChangeDetectorRef) {
 	this.directory = [];
@@ -22,6 +23,8 @@ export class FileBrowserComponent implements OnInit {
 	});
 	this.browserService.current.subscribe((value) => {
 	    this.current = value;
+	    if (this.prev === undefined)
+		this.prev = value;
 	    this.cdr.detectChanges();
 	});
     }
@@ -33,5 +36,10 @@ export class FileBrowserComponent implements OnInit {
     save() {
 	console.log("saving directory", this.current);
 	this.config.setValue("directory", this.current);
+    }
+
+    cancel() {
+	if (this.prev !== undefined)
+	    this.browserService.navigateDirectory(this.prev);
     }
 }
