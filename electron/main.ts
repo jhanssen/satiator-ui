@@ -119,7 +119,7 @@ function readFile(reqname: string, file: string, app?: boolean) {
     });
 }
 
-function readPartialFile(file: string, offset?: number, size?: number, app?: boolean) {
+function readPartialFile(file: string, size?: number, offset?: number, app?: boolean) {
     let rfile = file;
     if (rfile[0] !== '/' && !app)
 	rfile = path.resolve(currentDir, rfile);
@@ -177,8 +177,8 @@ ipcMain.on("readFile", (event: ElectronEvent, path: string, app?: boolean) => {
     readFile("readFileResponse", path, app);
 });
 
-ipcMain.on("readPartialFile", (event: ElectronEvent, path: string, offset?: number, size?: number, app?: boolean) => {
-    readPartialFile(path, offset, size, app);
+ipcMain.on("readPartialFile", (event: ElectronEvent, path: string, size?: number, offset?: number, app?: boolean) => {
+    readPartialFile(path, size, offset, app);
 });
 
 ipcMain.on("write", (event: ElectronEvent, file: string, data: Buffer, app?: boolean) => {
