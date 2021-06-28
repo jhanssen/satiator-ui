@@ -6,6 +6,9 @@ const fs = require('fs');
 const app = electron.app;
 const ipcMain = electron.ipcMain;
 
+const args = process.argv.slice(1);
+const serve = args.some(val => val === '--serve');
+
 type BrowserWindow = typeof electron.BrowserWindow;
 type ElectronEvent = typeof electron.Event;
 type Dirent = typeof fs.Dirent;
@@ -20,14 +23,21 @@ function onReady () {
 	    contextIsolation: false
 	}
     });
-    win.loadURL(url.format({
-	pathname: path.join(
-	    __dirname,
-	    '../../dist/satiator-ui/index.html'),
-	protocol: 'file:',
-	slashes: true
-    }));
-    win.webContents.openDevTools();
+    if (serve) {
+	win.webContents.openDevTools();
+	require('electron-reload')(__dirname, {
+	    electron: require(path.join(__dirname, '/../../node_modules/electron'))
+	});
+	win.loadURL('http://localhost:4200');
+    } else {
+	win.loadURL(url.format({
+	    pathname: path.join(
+		__dirname,
+		'../../dist/satiator-ui/index.html'),
+	    protocol: 'file:',
+	    slashes: true
+	}));
+    }
 }
 
 app.on('ready', onReady);
