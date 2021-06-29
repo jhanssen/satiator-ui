@@ -208,9 +208,17 @@ ipcMain.on("readPartialFile", (event: ElectronEvent, id: number, path: string, s
 
 ipcMain.on("readRedump", (event: ElectronEvent) => {
     fs.readFile("redump/redump.json", { encoding: "utf8" }, (err: Error | null, games: string) => {
-	fs.readFile("redump/sectors.bin", (err: Error | null, sectors: Buffer) => {
-	    win.webContents.send("readRedumpResponse", { games: JSON.parse(games), sectors: sectors });
-	});
+	if (err) {
+	    win.webContents.send("readRedumpResponse", { error: err });
+	} else {
+	    fs.readFile("redump/sectors.bin", (err: Error | null, sectors: Buffer) => {
+		if (err) {
+		    win.webContents.send("readRedumpResponse", { error: err });
+		} else {
+		    win.webContents.send("readRedumpResponse", { games: JSON.parse(games), sectors: sectors });
+		}
+	    });
+	}
     });
 });
 

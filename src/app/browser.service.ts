@@ -138,8 +138,10 @@ export class BrowserService {
 		}
 	    }
 	});
-	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { games: Redump[], sectors: Uint8Array }) => {
-	    this.redump.next(data);
+	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { error?: Error, games: Redump[], sectors: Uint8Array }) => {
+	    if (!data.error) {
+		this.redump.next(data);
+	    }
 	});
 	electron.ipcRenderer.on('readKeysResponse', (event: Event, data: { error?: Error, data: Keys }) => {
 	    if (!data.error)  {
