@@ -44,6 +44,12 @@ export class GameComponent implements OnInit, OnDestroy {
             d.unsubscribe();
         }
         this.subs = [];
+        this.scraper = undefined;
+        this.images = {
+            candidates: []
+        };
+        this.name = "";
+        this.selected = "";
     }
 
     select(name: string) {

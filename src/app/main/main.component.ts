@@ -60,9 +60,9 @@ export class MainComponent implements OnInit, OnDestroy {
                     const ext = file.substr(dot).toLowerCase();
                     this.browserService.readPartialFile(file, 2048).then(data => {
                         if (ext === ".iso") {
-                            this.addGame(i, this.parseSegaFile(file, data.data, 0));
+                            this.addGame(this.parseSegaFile(file, data.data, 0));
                         } else if (ext === ".bin") {
-                            this.addGame(i, this.parseSegaFile(file, data.data, 16));
+                            this.addGame(this.parseSegaFile(file, data.data, 16));
                         }
                         this.cdr.detectChanges();
                     });
@@ -77,6 +77,7 @@ export class MainComponent implements OnInit, OnDestroy {
             d.unsubscribe();
         }
         this.subs = [];
+        this.games = [];
     }
 
     gameName(id: string) {
@@ -98,7 +99,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.ngZone.run(() => { this.router.navigate(['/game', this.gameName(id)]) });;
     }
 
-    private addGame(idx: number, game: Game | undefined) {
+    private addGame(game: Game | undefined) {
         if (game === undefined)
             return;
         // don't add if we already have this game
