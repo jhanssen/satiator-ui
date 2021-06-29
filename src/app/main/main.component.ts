@@ -30,17 +30,19 @@ export class MainComponent implements OnInit {
 	this.browserService.redump.subscribe((data) => {
 	    // convert this to something useful
 	    this.redump = {};
-	    for (const game of data.game) {
-		const name = game.attr["@_name"];
-		for (const rom of game.rom) {
-		    const sha1 = rom.attr["@_sha1"];
-		    const file = rom.attr["@_name"];
-
-		    this.redump[sha1] = {
-			file, name
-		    };
+	    for (const game of data.games) {
+		if ("offset" in game) {
+		    const sega = this.parseSega(data.sectors, game.offset);
+		    if (sega === undefined) {
+			this.redump[game.serial] = game;
+		    } else {
+			this.redump[sega.id] = game;
+		    }
+		} else {
+		    this.redump[game.serial] = game;
 		}
 	    }
+	    this.cdr.detectChanges();
 	});
     }
 
@@ -56,21 +58,29 @@ export class MainComponent implements OnInit {
 		    if (dot === -1)
 			continue;
 		    const ext = file.substr(dot).toLowerCase();
-		    this.browserService.hashFile(file).then(sha1 => {
-			if (this.redump)
-			    console.log("got sha", sha1, this.redump[sha1]);
-			this.browserService.readPartialFile(file, 2048).then(data => {
-			    if (ext === ".iso") {
-				this.addGame(i, this.parseSega(file, data.data, 0));
-			    } else if (ext === ".bin") {
-				this.addGame(i, this.parseSega(file, data.data, 16));
-			    }
-			    this.cdr.detectChanges();
-			});
+		    this.browserService.readPartialFile(file, 2048).then(data => {
+			if (ext === ".iso") {
+			    this.addGame(i, this.parseSegaFile(file, data.data, 0));
+			} else if (ext === ".bin") {
+			    this.addGame(i, this.parseSegaFile(file, data.data, 16));
+			}
+			this.cdr.detectChanges();
 		    });
 		}
 	    });
 	});
+    }
+
+    gameName(id: string) {
+	if (!this.redump)
+	    return id;
+	if (!(id in this.redump))
+	    return id;
+	const name = this.redump[id].name;
+	const disc = name.indexOf("(Disc");
+	if (disc !== -1)
+	    return name.substr(0, disc - 1);
+	return name;
     }
 
     private addGame(idx: number, game: Game | undefined) {
@@ -84,16 +94,41 @@ export class MainComponent implements OnInit {
 	this.games.push(game);
     }
 
-    private parseSega(file: string, data: Uint8Array, offset: number) {
+    private parseSega(data: Uint8Array, offset: number) {
 	const parseGame = (game: string) => {
 	    const space = game.indexOf(' ');
-	    if (space === -1)
-		return { id: game };
+	    if (space === -1) {
+		const vv = game.lastIndexOf('V');
+		if (vv === -1)
+		    return { id: game };
+		return {
+		    id: game.substr(0, vv).trim(),
+		    version: game.substr(vv).trim()
+		};
+	    }
 	    return {
 		id: game.substr(0, space).trim(),
 		version: game.substr(space).trim()
 	    };
 	};
+
+	const decoder = new TextDecoder();
+	const sega = decoder.decode(new Uint8Array(data.buffer, offset, 16));
+	if (sega.indexOf("SEGA") === 0 && sega.indexOf("SATURN") !== -1) {
+	    // we good
+	    const game = decoder.decode(new Uint8Array(data.buffer, offset + 32, 16));
+	    const { id, version } = parseGame(game);
+	    // console.log("got game", id, version, extractName());
+
+	    return {
+		id,
+		version
+	    };
+	}
+	return undefined;
+    }
+
+    private parseSegaFile(file: string, data: Uint8Array, offset: number) {
 	const extractName = () => {
 	    const slash = file.lastIndexOf('/');
 	    if (slash === -1)
@@ -104,24 +139,16 @@ export class MainComponent implements OnInit {
 	    };
 	};
 
-	// check that the data is what we expect
-	const decoder = new TextDecoder();
-	const sega = decoder.decode(new Uint8Array(data.buffer, offset, 16));
-	if (sega.indexOf("SEGA") === 0 && sega.indexOf("SATURN") !== -1) {
-	    // we good
-	    const game = decoder.decode(new Uint8Array(data.buffer, offset + 32, 16));
-	    const { id, version } = parseGame(game);
-	    const { file, dir } = extractName();
-	    // console.log("got game", id, version, extractName());
-
-	    return {
-		id,
-		version,
-		file,
-		dir
-	    };
-	}
-	return undefined;
+	const sega = this.parseSega(data, offset);
+	if (sega === undefined)
+	    return undefined;
+	const { file: nfile, dir: ndir } = extractName();
+	return {
+	    id: sega.id,
+	    version: sega.version,
+	    file: nfile,
+	    dir: ndir
+	};
     }
 
     private uniqify(files: string[]) {

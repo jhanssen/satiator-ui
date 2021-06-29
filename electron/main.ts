@@ -4,7 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const nodefetch = require('node-fetch');
 const hash = require('sha1-file');
-const xmlParser = require('fast-xml-parser');
 
 const app = electron.app;
 const ipcMain = electron.ipcMain;
@@ -199,8 +198,10 @@ ipcMain.on("readPartialFile", (event: ElectronEvent, id: number, path: string, s
 });
 
 ipcMain.on("readRedump", (event: ElectronEvent) => {
-    fs.readFile("redump/redump.xml", { encoding: "utf8" }, (err: Error | null, data: string) => {
-	win.webContents.send("readRedumpResponse", { data: xmlParser.parse(data, { attrNodeName: "attr", ignoreAttributes: false }) });
+    fs.readFile("redump/redump.json", { encoding: "utf8" }, (err: Error | null, games: string) => {
+	fs.readFile("redump/sectors.bin", (err: Error | null, sectors: Buffer) => {
+	    win.webContents.send("readRedumpResponse", { games: JSON.parse(games), sectors: sectors });
+	});
     });
 });
 

@@ -52,7 +52,7 @@ export class BrowserService {
     current = new ReplaySubject<string>();
     file = new ReplaySubject<string[]>();
     directory = new ReplaySubject<string[]>();
-    redump = new ReplaySubject<any>();
+    redump = new ReplaySubject<{ games: any, sectors: Uint8Array }>();
     private reads: ReadRequest[];
     private hashes: HashRequest[];
     private readId: number;
@@ -122,8 +122,8 @@ export class BrowserService {
 		}
 	    }
 	});
-	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { data: any }) => {
-	    this.redump.next(data.data.datafile);
+	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { games: any, sectors: Uint8Array }) => {
+	    this.redump.next(data);
 	});
 	electron.ipcRenderer.send('readRedump');
     }
