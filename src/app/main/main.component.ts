@@ -1,13 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { BrowserService, Redump } from '../browser.service';
 import { ConfigService } from '../config.service';
-
-interface Game {
-    id: string;
-    version?: string;
-    file: string;
-    dir?: string;
-}
+import { Game } from '../game.interface';
 
 @Component({
   selector: 'app-main',

@@ -12,13 +12,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { SettingsComponent } from './settings/settings.component';
+import { GameComponent } from './game/game.component';
 
 @NgModule({
     declarations: [
 	AppComponent,
 	FileBrowserComponent,
 	MainComponent,
-	SettingsComponent
+	SettingsComponent,
+ GameComponent
     ],
     imports: [
 	BrowserModule,
