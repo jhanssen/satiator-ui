@@ -1,2 +1,5 @@
 .flex { width: 100%; display: flex; justify-content: space-between; }
 a { color: inherit; }
+
+div.height { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+div.scroll { overflow-y: scroll; flex: 2 }

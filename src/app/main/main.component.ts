@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { BrowserService, Redump } from '../browser.service';
 import { ConfigService } from '../config.service';
@@ -9,21 +9,26 @@ import { Game } from '../game.interface';
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.css']
 })
-export class MainComponent implements OnInit {
+export class MainComponent implements OnInit, OnDestroy {
     games: Game[];
     redump: { [key: string]: Redump } | undefined;
+    private subs: any[];
 
     constructor(private browserService: BrowserService, private config: ConfigService,
                 private cdr: ChangeDetectorRef, private router: Router, private ngZone: NgZone) {
         this.games = [];
+        this.subs = [];
+    }
 
-        config.getValue("directory").subscribe(dir => {
+    ngOnInit(): void {
+        let sub = this.config.getValue("directory").subscribe(dir => {
             console.log("got dir", dir);
             if (typeof dir === "string") {
                 this.browserService.navigateDirectory(dir);
             }
         });
-        this.browserService.redump.subscribe((data) => {
+        this.subs.push(sub);
+        sub = this.browserService.redump.subscribe((data) => {
             // convert this to something useful
             this.redump = {};
             for (const game of data.games) {
@@ -41,10 +46,8 @@ export class MainComponent implements OnInit {
             }
             this.cdr.detectChanges();
         });
-    }
-
-    ngOnInit(): void {
-        this.browserService.file.subscribe((value) => {
+        this.subs.push(sub);
+        sub = this.browserService.file.subscribe((value) => {
             //console.log("files?", value);
             this.uniqify(value).then(unique => {
                 const num = unique.length;
@@ -66,6 +69,14 @@ export class MainComponent implements OnInit {
                 }
             });
         });
+        this.subs.push(sub);
+    }
+
+    ngOnDestroy(): void {
+        for (let d of this.subs) {
+            d.unsubscribe();
+        }
+        this.subs = [];
     }
 
     gameName(id: string) {

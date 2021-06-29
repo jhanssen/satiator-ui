@@ -1,19 +1,23 @@
-<mat-toolbar color="accent">
-  <mat-toolbar-row>
-    <div class="flex">
-      <span>
-	satiator-ui
-      </span>
-      <span>
-	<a href="/settings"><mat-icon>settings</mat-icon></a>
-      </span>
-    </div>
-  </mat-toolbar-row>
-</mat-toolbar>
-<mat-list>
-  <mat-list-item *ngFor="let game of games">
-    <div (click)="navigate(game.id)">
-      {{ gameName(game.id) }}
-    </div>
-  </mat-list-item>
-</mat-list>
+<div class="height">
+  <mat-toolbar color="accent">
+    <mat-toolbar-row>
+      <div class="flex">
+	<span>
+	  satiator-ui
+	</span>
+	<span>
+	  <a href="/settings"><mat-icon>settings</mat-icon></a>
+	</span>
+      </div>
+    </mat-toolbar-row>
+  </mat-toolbar>
+  <div class="scroll">
+    <mat-list>
+      <mat-list-item *ngFor="let game of games">
+	<div (click)="navigate(game.id)">
+	  {{ gameName(game.id) }}
+	</div>
+      </mat-list-item>
+    </mat-list>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-div.height { display: flex; flex-direction: column; height: 100%; }
+div.height { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
 div.buttons { display: flex; }
 div.button { margin: 10px; }
-div.scroll { overflow-y: scroll; }
+div.scroll { overflow-y: scroll; flex: 2 }

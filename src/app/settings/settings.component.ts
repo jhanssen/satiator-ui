@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FileBrowserComponent } from '../filebrowser/filebrowser.component';
 import { BrowserService } from '../browser.service';
 import { Router } from '@angular/router';
@@ -8,27 +8,37 @@ import { Router } from '@angular/router';
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.css']
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
     @ViewChild('filebrowser') filebrowser!: FileBrowserComponent;
     current: string|undefined;
+    private subs: any[];
 
     constructor(private browserService: BrowserService, private cdr: ChangeDetectorRef, private router: Router) {
-	this.browserService.current.subscribe((value) => {
-	    this.current = value;
-	    this.cdr.detectChanges();
-	});
+        this.subs = [];
     }
 
     ngOnInit(): void {
+        let sub = this.browserService.current.subscribe((value) => {
+            this.current = value;
+            this.cdr.detectChanges();
+        });
+        this.subs.push(sub);
+    }
+
+    ngOnDestroy(): void {
+        for (let d of this.subs) {
+            d.unsubscribe();
+        }
+        this.subs = [];
     }
 
     save() {
-	this.filebrowser.save();
-	this.router.navigate(['/']);
+        this.filebrowser.save();
+        this.router.navigate(['/']);
     }
 
     cancel() {
-	this.filebrowser.cancel();
-	this.router.navigate(['/']);
+        this.filebrowser.cancel();
+        this.router.navigate(['/']);
     }
 }

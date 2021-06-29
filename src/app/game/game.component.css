@@ -1,0 +1,19 @@
+.wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 170px); /* 170 = 150 + 10 + 10, 150 for the image, 10 for the pad */
+    grid-gap: 0px;
+    justify-content: space-between;
+}
+
+.pad {
+    margin: 10px;
+}
+
+.selected {
+    background-color: #f00;
+}
+
+div.height { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+div.buttons { display: flex; }
+div.button { margin: 10px; }
+div.scroll { overflow-y: scroll; flex: 2 }

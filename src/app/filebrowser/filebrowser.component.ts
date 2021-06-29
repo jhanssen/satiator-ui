@@ -13,33 +13,33 @@ export class FileBrowserComponent implements OnInit {
     private prev: string|undefined;
 
     constructor(private browserService: BrowserService, private config: ConfigService, private cdr: ChangeDetectorRef) {
-	this.directory = [];
+        this.directory = [];
     }
 
     ngOnInit() {
-	this.browserService.directory.subscribe((value) => {
-	    this.directory = value;
-	    this.cdr.detectChanges();
-	});
-	this.browserService.current.subscribe((value) => {
-	    this.current = value;
-	    if (this.prev === undefined)
-		this.prev = value;
-	    this.cdr.detectChanges();
-	});
+        this.browserService.directory.subscribe((value) => {
+            this.directory = value;
+            this.cdr.detectChanges();
+        });
+        this.browserService.current.subscribe((value) => {
+            this.current = value;
+            if (this.prev === undefined)
+                this.prev = value;
+            this.cdr.detectChanges();
+        });
     }
 
     navigateDirectory(path: string) {
-	this.browserService.navigateDirectory(path);
+        this.browserService.navigateDirectory(path);
     }
 
     save() {
-	console.log("saving directory", this.current);
-	this.config.setValue("directory", this.current);
+        console.log("saving directory", this.current);
+        this.config.setValue("directory", this.current);
     }
 
     cancel() {
-	if (this.prev !== undefined)
-	    this.browserService.navigateDirectory(this.prev);
+        if (this.prev !== undefined)
+            this.browserService.navigateDirectory(this.prev);
     }
 }

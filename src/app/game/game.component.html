@@ -1,2 +1,26 @@
-<p>game works!</p>
-<div> {{ name }} </div>
+<div class="height">
+  <mat-toolbar color="accent">
+    <mat-toolbar-row>
+      {{ name }}
+    </mat-toolbar-row>
+  </mat-toolbar>
+  <div class="scroll">
+    <div class="wrapper">
+      <div *ngFor="let image of images.candidates" (click)="select(image.image)" [class]="className(image.image)">
+	<img [src]="image.image" width="150" onerror="this.style.display='none'" class="pad" />
+      </div>
+    </div>
+  </div>
+  <mat-toolbar color="accent">
+    <mat-toolbar-row>
+      <div class="buttons">
+	<div class="button">
+	  <button mat-raised-button color="primary" (click)="save()">Save</button>
+	</div>
+	<div class="button">
+	  <button mat-raised-button (click)="cancel()">Cancel</button>
+	</div>
+      </div>
+    </mat-toolbar-row>
+  </mat-toolbar>
+</div>
