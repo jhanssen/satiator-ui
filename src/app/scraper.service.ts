@@ -1,5 +1,6 @@
 import { ConfigService } from './config.service'
 import { BrowserService, Keys } from './browser.service';
+import { first } from 'rxjs/operators'
 
 export interface ScrapeRequest {
     name: string;
@@ -29,7 +30,7 @@ class ScraperGoogleService extends ScraperService {
 
     scrape(request: ScrapeRequest): Promise<ScrapeResponse> {
         return new Promise((resolve, reject) => {
-            this.browserService.keys.subscribe((keys: Keys)  => {
+            this.browserService.keys.pipe(first()).subscribe((keys: Keys)  => {
                 const query = `q=${encodeURIComponent(request.name + " saturn cover")}&searchType=image&cx=${keys.google.cx}&key=${keys.google.key}`;
                 const url = `https://www.googleapis.com/customsearch/v1?${query}`;
                 fetch(url).then(data => data.json()).then(data => {
@@ -56,7 +57,7 @@ class ScraperTheGamesDbService extends ScraperService {
 
     scrape(request: ScrapeRequest): Promise<ScrapeResponse> {
         return new Promise((resolve, reject) => {
-            this.browserService.keys.subscribe((keys: Keys)  => {
+            this.browserService.keys.pipe(first()).subscribe((keys: Keys)  => {
                 const url = `https://api.thegamesdb.net/v1/Games/ByGameName?apikey=${keys.thegamesdb.key}&name=${encodeURIComponent(request.name)}`;
                 this.browserService.fetch(url).then(data => {
                     const json = JSON.parse((new TextDecoder()).decode(data.data));
