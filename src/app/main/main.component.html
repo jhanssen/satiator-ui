@@ -12,7 +12,7 @@
 </mat-toolbar>
 <mat-list>
   <mat-list-item *ngFor="let game of games">
-    <div [routerLink]="['/game', gameName(game.id)]">
+    <div (click)="navigate(game.id)">
       {{ gameName(game.id) }}
     </div>
   </mat-list-item>
