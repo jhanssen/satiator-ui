@@ -53,6 +53,13 @@ export interface Redump {
     disc: number;
 }
 
+export interface Keys {
+    google: {
+	cx: string;
+	key: string;
+    }
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -61,6 +68,7 @@ export class BrowserService {
     file = new ReplaySubject<string[]>();
     directory = new ReplaySubject<string[]>();
     redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>();
+    keys = new ReplaySubject<Keys>();
     private reads: ReadRequest[];
     private hashes: HashRequest[];
     private readId: number;
@@ -133,7 +141,14 @@ export class BrowserService {
 	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { games: Redump[], sectors: Uint8Array }) => {
 	    this.redump.next(data);
 	});
+	electron.ipcRenderer.on('readKeysResponse', (event: Event, data: { error?: Error, data: Keys }) => {
+	    if (!data.error)  {
+		console.log("got", data.data);
+		this.keys.next(data.data);
+	    }
+	});
 	electron.ipcRenderer.send('readRedump');
+	electron.ipcRenderer.send('readKeys');
     }
 
     navigateDirectory(path: string) {
