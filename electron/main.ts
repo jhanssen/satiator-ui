@@ -222,17 +222,31 @@ ipcMain.on("readRedump", (event: ElectronEvent) => {
     });
 });
 
+const writes: { id: number, file: string, writeFile: string, data: Buffer }[] = [];
+
+function execWrite() {
+    if (writes.length === 0)
+        return;
+    const w = writes[0];
+    fs.writeFile(w.writeFile, w.data, (err: Error | null) => {
+        if (err) {
+            win.webContents.send("writeResponse", { id: w.id, file: w.file, error: err });
+        } else {
+            win.webContents.send("writeResponse", { id: w.id, file: w.file });
+        }
+        writes.splice(0, 1);
+        if (writes.length > 0)
+            process.nextTick(execWrite);
+    });
+}
+
 ipcMain.on("write", (event: ElectronEvent, id: number, file: string, data: Buffer, app?: boolean) => {
     let wfile = file;
     if (wfile[0] !== '/' && !app)
-	wfile = path.resolve(currentDir, wfile);
-    fs.writeFile(wfile, data, (err: Error | null) => {
-	if (err) {
-	    win.webContents.send("writeResponse", { id: id, file: file, error: err });
-	} else {
-	    win.webContents.send("writeResponse", { id: id, file: file });
-	}
-    });
+        wfile = path.resolve(currentDir, wfile);
+    writes.push({ id: id, file: file, writeFile: wfile, data: data });
+    if (writes.length === 1)
+        execWrite();
 });
 
 ipcMain.on("readKeys", (event: ElectronEvent) => {
