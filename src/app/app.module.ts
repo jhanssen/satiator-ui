@@ -16,20 +16,20 @@ import { GameComponent } from './game/game.component';
 
 @NgModule({
     declarations: [
-	AppComponent,
-	FileBrowserComponent,
-	MainComponent,
-	SettingsComponent,
- GameComponent
+        AppComponent,
+        FileBrowserComponent,
+        MainComponent,
+        SettingsComponent,
+        GameComponent
     ],
     imports: [
-	BrowserModule,
-	AppRoutingModule,
-	BrowserAnimationsModule,
-	MatListModule,
-	MatButtonModule,
-	MatToolbarModule,
-	MatIconModule
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        MatListModule,
+        MatButtonModule,
+        MatToolbarModule,
+        MatIconModule
     ],
     providers: [],
     bootstrap: [AppComponent]

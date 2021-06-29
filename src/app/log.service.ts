@@ -8,6 +8,6 @@ export class LogService {
     constructor() { }
 
     log(...data: any) {
-	electron.ipcRenderer.send("log", ...data);
+        electron.ipcRenderer.send("log", ...data);
     }
 }

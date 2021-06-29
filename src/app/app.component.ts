@@ -12,6 +12,6 @@ export class AppComponent implements OnInit {
     constructor(private browserService: BrowserService) {}
 
     ngOnInit(): void {
-	this.browserService.navigateDirectory('.');
+        this.browserService.navigateDirectory('.');
     }
 }
