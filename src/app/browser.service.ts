@@ -145,7 +145,6 @@ export class BrowserService {
 	});
 	electron.ipcRenderer.on('readKeysResponse', (event: Event, data: { error?: Error, data: Keys }) => {
 	    if (!data.error)  {
-		console.log("got", data.data);
 		this.keys.next(data.data);
 	    }
 	});
