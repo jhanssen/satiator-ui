@@ -7,7 +7,7 @@
   <div class="scroll">
     <div class="wrapper">
       <div *ngFor="let image of images.candidates" (click)="select(image.image)" [class]="className(image.image)">
-	<img [src]="image.image" width="150" onerror="this.style.display='none'" class="pad" />
+	<img [src]="image.image" width="150" onerror="this.parentNode.style.display='none'" class="pad" />
       </div>
     </div>
   </div>

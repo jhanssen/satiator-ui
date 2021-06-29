@@ -57,6 +57,9 @@ export interface Keys {
     google: {
         cx: string;
         key: string;
+    },
+    thegamesdb: {
+        key: string;
     }
 }
 
@@ -64,11 +67,11 @@ export interface Keys {
     providedIn: 'root'
 })
 export class BrowserService {
-    current = new ReplaySubject<string>();
-    file = new ReplaySubject<string[]>();
-    directory = new ReplaySubject<string[]>();
-    redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>();
-    keys = new ReplaySubject<Keys>();
+    current = new ReplaySubject<string>(1);
+    file = new ReplaySubject<string[]>(1);
+    directory = new ReplaySubject<string[]>(1);
+    redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>(1);
+    keys = new ReplaySubject<Keys>(1);
     private reads: ReadRequest[];
     private hashes: HashRequest[];
     private readId: number;
@@ -121,6 +124,23 @@ export class BrowserService {
                 }
             }
         });
+        electron.ipcRenderer.on('fetchResponse', (event: Event, read: ReadFileResponse) => {
+            const num = this.reads.length;
+            for (let i = 0; i < num; ++i) {
+                if (this.reads[i].id === read.id) {
+                    if (read.error) {
+                        this.reads[i].reject(read.error);
+                    } else {
+                        if (read.data === undefined) {
+                            throw new Error("can't happen");
+                        }
+                        this.reads[i].resolve({ data: read.data, size: read.data.byteLength });
+                    }
+                    this.reads.splice(i, 1);
+                    return;
+                }
+            }
+        });
         electron.ipcRenderer.on('hashFileResponse', (event: Event, read: HashFileResponse) => {
             const num = this.hashes.length;
             for (let i = 0; i < num; ++i) {
@@ -156,7 +176,7 @@ export class BrowserService {
         electron.ipcRenderer.send('navigateDirectory', 0, path);
     }
 
-    readPartialFile(path: string, size?: number, offset?: number): Promise<{ data: Uint8Array, size: number}> {
+    readPartialFile(path: string, size?: number, offset?: number): Promise<{ data: Uint8Array, size: number }> {
         const id = this.readId++;
         return new Promise((resolve, reject) => {
             this.reads.push({ id: id, resolve: resolve, reject: reject });
@@ -164,11 +184,19 @@ export class BrowserService {
         });
     }
 
-    readFile(path: string): Promise<{ data: Uint8Array, size: number}> {
+    readFile(path: string): Promise<{ data: Uint8Array, size: number }> {
         const id = this.readId++;
         return new Promise((resolve, reject) => {
             this.reads.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('readFile', id, path);
+        });
+    }
+
+    fetch(path: string): Promise<{ data: Uint8Array, size: number }> {
+        const id = this.readId++;
+        return new Promise((resolve, reject) => {
+            this.reads.push({ id: id, resolve: resolve, reject: reject });
+            electron.ipcRenderer.send('fetch', id, path);
         });
     }
 

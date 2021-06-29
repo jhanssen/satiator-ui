@@ -4,6 +4,16 @@
       {{ this.current }}
     </mat-toolbar-row>
   </mat-toolbar>
+  <div class="scraper">
+    <div>
+      Scraper
+    </div>
+    <mat-form-field appearance="fill">
+      <mat-select [(value)]="scraper">
+	<mat-option *ngFor="let scraper of scrapers" [value]="scraper">{{ scraper }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   <div class="scroll">
     <app-filebrowser #filebrowser></app-filebrowser>
   </div>

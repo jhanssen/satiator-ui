@@ -2,3 +2,5 @@ div.height { display: flex; flex-direction: column; justify-content: space-betwe
 div.buttons { display: flex; }
 div.button { margin: 10px; }
 div.scroll { overflow-y: scroll; flex: 2 }
+div.scraper { margin: 10px; max-width: 500px; display: flex; flex-direction: row; align-items: center; }
+div.scraper > div { margin: 10px; margin-right: 20px; }

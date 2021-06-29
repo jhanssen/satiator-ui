@@ -43,7 +43,11 @@ export class ConfigService {
                 return;
 
             if (data.data) {
-                this.data = JSON.parse(new TextDecoder().decode(data.data));
+                try {
+                    this.data = JSON.parse(new TextDecoder().decode(data.data));
+                } catch (err) {
+                    this.data = {};
+                }
             } else {
                 this.data = {};
             }
@@ -68,7 +72,7 @@ export class ConfigService {
     getValue(name: string): ReplaySubject<ConfigValue> {
         let s = this.subjects[name];
         if (s === undefined) {
-            s = new ReplaySubject<ConfigValue>();
+            s = new ReplaySubject<ConfigValue>(1);
             this.subjects[name] = s;
             process.nextTick(() => {
                 if (s && this.data) {
