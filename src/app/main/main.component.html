@@ -14,7 +14,7 @@
   <div class="scroll">
     <mat-list>
       <mat-list-item *ngFor="let game of games">
-	<div (click)="navigate(game.id)">
+	<div (click)="navigate(game.id)" class="click">
 	  {{ gameName(game.id) }}
 	</div>
       </mat-list-item>
