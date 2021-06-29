@@ -45,6 +45,14 @@ interface HashRequest {
     reject: (error: any) => void;
 }
 
+export interface Redump {
+    name: string;
+    subname?: string;
+    serial: string;
+    offset?: number;
+    disc: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -52,7 +60,7 @@ export class BrowserService {
     current = new ReplaySubject<string>();
     file = new ReplaySubject<string[]>();
     directory = new ReplaySubject<string[]>();
-    redump = new ReplaySubject<{ games: any, sectors: Uint8Array }>();
+    redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>();
     private reads: ReadRequest[];
     private hashes: HashRequest[];
     private readId: number;
@@ -122,7 +130,7 @@ export class BrowserService {
 		}
 	    }
 	});
-	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { games: any, sectors: Uint8Array }) => {
+	electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { games: Redump[], sectors: Uint8Array }) => {
 	    this.redump.next(data);
 	});
 	electron.ipcRenderer.send('readRedump');

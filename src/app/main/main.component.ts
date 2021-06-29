@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { BrowserService } from '../browser.service';
+import { BrowserService, Redump } from '../browser.service';
 import { ConfigService } from '../config.service';
 
 interface Game {
@@ -16,7 +16,7 @@ interface Game {
 })
 export class MainComponent implements OnInit {
     games: Game[];
-    redump: { [key: string]: { file: string, name: string } } | undefined;
+    redump: { [key: string]: Redump } | undefined;
 
     constructor(private browserService: BrowserService, private config: ConfigService, private cdr: ChangeDetectorRef) {
 	this.games = [];
@@ -31,8 +31,9 @@ export class MainComponent implements OnInit {
 	    // convert this to something useful
 	    this.redump = {};
 	    for (const game of data.games) {
-		if ("offset" in game) {
-		    const sega = this.parseSega(data.sectors, game.offset);
+		const offset = game.offset;
+		if (offset !== undefined) {
+		    const sega = this.parseSega(data.sectors, offset);
 		    if (sega === undefined) {
 			this.redump[game.serial] = game;
 		    } else {
@@ -76,10 +77,13 @@ export class MainComponent implements OnInit {
 	    return id;
 	if (!(id in this.redump))
 	    return id;
-	const name = this.redump[id].name;
+	const redump = this.redump[id];
+	let name = redump.name;
 	const disc = name.indexOf("(Disc");
 	if (disc !== -1)
-	    return name.substr(0, disc - 1);
+	    name = name.substr(0, disc - 1);
+	if (redump.subname)
+	    name = name + ` (${redump.subname})`;
 	return name;
     }
 
