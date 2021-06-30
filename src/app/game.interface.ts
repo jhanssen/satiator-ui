@@ -3,4 +3,5 @@ export interface Game {
     version?: string;
     file: string;
     dir?: string;
+    tga?: string;
 }

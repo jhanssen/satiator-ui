@@ -3,4 +3,7 @@ a { color: inherit; }
 
 div.height { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
 div.scroll { overflow-y: scroll; flex: 2 }
-div.click { cursor: pointer; }
+
+div.horiz { height: auto; display: flex; flex-direction: row; justify-content: space-between; width: 100%; align-items: center; }
+div.list { margin: 20px; }
+div.game { cursor: pointer; font-size: 1.3em; }

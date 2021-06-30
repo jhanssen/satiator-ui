@@ -6,6 +6,8 @@ const nodefetch = require('node-fetch');
 const nodecrypto = require('crypto');
 const hash = require('sha1-file');
 const drivelist = require('drivelist');
+const TGA = require('tga');
+const sharp = require('sharp');
 
 const app = electron.app;
 const ipcMain = electron.ipcMain;
@@ -142,7 +144,7 @@ function hashFile(id: number, file: string, app?: boolean) {
     if (rfile[0] !== '/' && !app)
 	rfile = path.resolve(currentDir, rfile);
     hash(rfile).then((sha: string) => {
-	win.webContents.send("hashFileResponse", { id: id, file: file, hash: sha });
+        win.webContents.send("hashFileResponse", { id: id, file: file, data: sha });
     }).catch((err: Error) => {
 	win.webContents.send("hashFileResponse", { id: id, file: file, error: err });
     });
@@ -296,6 +298,74 @@ ipcMain.on("readKeys", (event: ElectronEvent) => {
 	    win.webContents.send("readKeysResponse", { data: JSON.parse(decrypted.toString()) });
 	}
     });
+});
+
+ipcMain.on("tgaToPng", (event: ElectronEvent, id: number, data: string|Uint8Array) => {
+    const loadBuffer = (buffer: Buffer) => {
+        const tga = new TGA(buffer);
+        sharp(tga.pixels, { raw: {
+            width: tga.width,
+            height: tga.height,
+            channels: 4,
+            premultiplied: false
+        } }).png().toBuffer().then((png: Buffer) => {
+            const uri = 'data:image/png;base64,' + png.toString('base64');
+            win.webContents.send("tgaToPngResponse", { id: id, data: uri });
+        }).catch((err: Error) => {
+            win.webContents.send("tgaToPngResponse", { id: id, error: err });
+        });
+    };
+    if (data instanceof Uint8Array) {
+        loadBuffer(Buffer.from(data.buffer));
+    } else {
+        // read file
+        let rfile = data;
+        if (rfile[0] !== '/')
+            rfile = path.resolve(currentDir, rfile);
+        fs.readFile(rfile, (err: Error, data: Buffer) => {
+            if (err) {
+                win.webContents.send("tgaToPngResponse", { id: id, error: err });
+            } else {
+                loadBuffer(data);
+            }
+        });
+    }
+});
+
+ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: string, width: number, height?: number) => {
+    let wfile = file;
+    if (wfile[0] !== '/')
+        wfile = path.resolve(currentDir, wfile);
+    nodefetch(url)
+        .then((res: any) => res.buffer())
+        .then((buffer: Buffer) => {
+            return new Promise<Buffer>((resolve, reject) => {
+                sharp(buffer)
+                    .resize(width, height)
+                    .raw()
+                    .toBuffer((err: Error, data: Buffer, info: any) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(TGA.createTgaBuffer(info.width, info.height, data));
+                        }
+                    });
+            });
+        }).then((buffer: Buffer) => {
+            return new Promise<void>((resolve, reject) => {
+                fs.writeFile(wfile, buffer, (err: Error | null) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }).then(() => {
+            win.webContents.send("imageToTgaResponse", { id: id });
+        }).catch((err: Error) => {
+            win.webContents.send("imageToTgaResponse", { id: id, error: err });
+        });
 });
 
 ipcMain.on("log", (event: ElectronEvent, ...data: any) => {

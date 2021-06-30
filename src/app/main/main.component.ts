@@ -14,7 +14,7 @@ export class MainComponent implements OnInit, OnDestroy {
     redump: { [key: string]: Redump } | undefined;
     private subs: any[];
 
-    constructor(private browserService: BrowserService, private config: ConfigService,
+    constructor(private browser: BrowserService, private config: ConfigService,
                 private cdr: ChangeDetectorRef, private router: Router, private ngZone: NgZone) {
         this.games = [];
         this.subs = [];
@@ -23,7 +23,7 @@ export class MainComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         let sub = this.config.getValue("drive").subscribe(device => {
             // find where this drive is mounted
-            this.browserService.drivelist().then(drives => {
+            this.browser.drivelist().then(drives => {
                 // find the drive device
                 let dir: string|undefined;
                 for (const drive of drives) {
@@ -38,12 +38,12 @@ export class MainComponent implements OnInit, OnDestroy {
                     }
                 }
                 if (dir !== undefined) {
-                    this.browserService.navigateDirectory(dir);
+                    this.browser.navigateDirectory(dir);
                 }
             });
         });
         this.subs.push(sub);
-        sub = this.browserService.redump.subscribe((data) => {
+        sub = this.browser.redump.subscribe((data) => {
             // convert this to something useful
             this.redump = {};
             for (const game of data.games) {
@@ -62,7 +62,7 @@ export class MainComponent implements OnInit, OnDestroy {
             this.cdr.detectChanges();
         });
         this.subs.push(sub);
-        sub = this.browserService.file.subscribe((value) => {
+        sub = this.browser.file.subscribe((value) => {
             //console.log("files?", value);
             this.uniqify(value).then(unique => {
                 const num = unique.length;
@@ -73,7 +73,7 @@ export class MainComponent implements OnInit, OnDestroy {
                     if (dot === -1)
                         continue;
                     const ext = file.substr(dot).toLowerCase();
-                    this.browserService.readPartialFile(file, 2048).then(data => {
+                    this.browser.readPartialFile(file, 2048).then(data => {
                         if (ext === ".iso") {
                             this.addGame(this.parseSegaFile(file, data.data, 0));
                         } else if (ext === ".bin") {
@@ -127,6 +127,16 @@ export class MainComponent implements OnInit, OnDestroy {
         this.games.sort((a, b) => {
             return a.id.localeCompare(b.id);
         });
+
+        // attempt to fetch TGA
+        // console.log("want to fetch tga", game.file, game.dir);
+        if (game.dir) {
+            const tga = game.dir + "/BOX.TGA";
+            this.browser.readTga(tga).then(png => {
+                game.tga = png;
+                this.cdr.detectChanges();
+            }).catch(err => {});
+        }
     }
 
     private parseSega(data: Uint8Array, offset: number) {
@@ -208,7 +218,7 @@ export class MainComponent implements OnInit, OnDestroy {
                     continue;
                 }
                 promises.push(new Promise<void>((resolve, reject) => {
-                    this.browserService.readFile(file).then(data => {
+                    this.browser.readFile(file).then(data => {
                         const fn = this.parseCueFile(data.data);
                         // console.log("got fn", fn, "for", file);
                         const slash = file.lastIndexOf('/');

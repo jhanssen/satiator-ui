@@ -12,12 +12,15 @@
     </mat-toolbar-row>
   </mat-toolbar>
   <div class="scroll">
-    <mat-list>
-      <mat-list-item *ngFor="let game of games">
-	<div (click)="navigate(game.id)" class="click">
+    <div *ngFor="let game of games" class="list">
+      <div class="horiz">
+	<div (click)="navigate(game.id)" class="game">
 	  {{ gameName(game.id) }}
 	</div>
-      </mat-list-item>
-    </mat-list>
+	<div>
+	  <img [src]="game.tga" />
+	</div>
+      </div>
+    </div>
   </div>
 </div>

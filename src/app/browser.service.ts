@@ -29,7 +29,13 @@ interface ReadFileResponse {
 interface HashFileResponse {
     id: number;
     file: string;
-    hash?: string;
+    data?: string;
+    error?: Error;
+}
+
+interface StringResponse {
+    id: number;
+    data?: string;
     error?: Error;
 }
 
@@ -93,13 +99,13 @@ export class BrowserService {
     redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>(1);
     keys = new ReplaySubject<Keys>(1);
     private reads: ReadRequest[];
-    private hashes: HashRequest[];
+    private strings: HashRequest[];
     private drives: DriveRequest[];
     private eid: number;
 
     constructor() {
         this.reads = [];
-        this.hashes = [];
+        this.strings = [];
         this.drives = [];
         this.eid = 0;
 
@@ -164,18 +170,35 @@ export class BrowserService {
             }
         });
         electron.ipcRenderer.on('hashFileResponse', (event: Event, read: HashFileResponse) => {
-            const num = this.hashes.length;
+            const num = this.strings.length;
             for (let i = 0; i < num; ++i) {
-                if (this.hashes[i].id === read.id) {
+                if (this.strings[i].id === read.id) {
                     if (read.error) {
-                        this.hashes[i].reject(read.error);
+                        this.strings[i].reject(read.error);
                     } else {
-                        if (read.hash === undefined) {
+                        if (read.data === undefined) {
                             throw new Error("can't happen");
                         }
-                        this.hashes[i].resolve(read.hash);
+                        this.strings[i].resolve(read.data);
                     }
-                    this.hashes.splice(i, 1);
+                    this.strings.splice(i, 1);
+                    return;
+                }
+            }
+        });
+        electron.ipcRenderer.on('tgaToPngResponse', (event: Event, read: StringResponse) => {
+            const num = this.strings.length;
+            for (let i = 0; i < num; ++i) {
+                if (this.strings[i].id === read.id) {
+                    if (read.error) {
+                        this.strings[i].reject(read.error);
+                    } else {
+                        if (read.data === undefined) {
+                            throw new Error("can't happen");
+                        }
+                        this.strings[i].resolve(read.data);
+                    }
+                    this.strings.splice(i, 1);
                     return;
                 }
             }
@@ -242,7 +265,7 @@ export class BrowserService {
     hashFile(path: string): Promise<string> {
         const id = this.eid++;
         return new Promise((resolve, reject) => {
-            this.hashes.push({ id: id, resolve: resolve, reject: reject });
+            this.strings.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('hashFile', id, path);
         });
     }
@@ -252,6 +275,14 @@ export class BrowserService {
         return new Promise((resolve, reject) => {
             this.drives.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('drivelist', id);
+        });
+    }
+
+    readTga(path: string): Promise<string> {
+        const id = this.eid++;
+        return new Promise((resolve, reject) => {
+            this.strings.push({ id: id, resolve: resolve, reject: reject });
+            electron.ipcRenderer.send('tgaToPng', id, path);
         });
     }
 }
