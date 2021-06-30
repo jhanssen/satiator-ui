@@ -346,11 +346,13 @@ ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: s
                     .then((metadata: { width: number, height: number }) => {
                         if (bounds < 8) {
                             // boo
-                            throw new Error(`bounds too small ${bounds}`);
+                            reject(new Error(`bounds too small ${bounds}`));
+                            return;
                         }
                         if (metadata.width < 8 || metadata.height < 8) {
                             // boo some more
-                            throw new Error(`image width/height too small ${metadata.width}x${metadata.height}`);
+                            reject(new Error(`image width/height too small ${metadata.width}x${metadata.height}`));
+                            return;
                         }
                         let w = bounds, h = bounds;
                         // width needs to be a multiple of 8
@@ -374,7 +376,7 @@ ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: s
                                 h -= (m * ratio);
                             }
                         }
-                        return image
+                        image
                             .resize(Math.floor(w), Math.floor(h))
                             .ensureAlpha()
                             .raw()
