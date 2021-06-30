@@ -341,7 +341,7 @@ ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: s
         .then((buffer: Buffer) => {
             return new Promise<Buffer>((resolve, reject) => {
                 sharp(buffer)
-                    .resize(width, height)
+                    .resize(width, height, { fit: 'inside' })
                     .ensureAlpha()
                     .raw()
                     .toBuffer((err: Error, data: Buffer, info: any) => {
