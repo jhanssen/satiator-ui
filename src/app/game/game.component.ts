@@ -78,7 +78,11 @@ export class GameComponent implements OnInit, OnDestroy {
     private scrape() {
         if (!this.scraper)
             throw new Error("can't happen");
-        this.scraper.scrape({ name: this.name }).then(data => {
+        let name = this.name;
+        const disc = name.indexOf("(Disc");
+        if (disc !== -1)
+            name = name.substr(0, disc - 1);
+        this.scraper.scrape({ name: name }).then(data => {
             // console.log("hoo", data);
             this.images = data;
         }).catch(e => {});
