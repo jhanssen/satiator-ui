@@ -45,6 +45,18 @@ interface HashRequest {
     reject: (error: any) => void;
 }
 
+interface DriveRequest {
+    id: number;
+    resolve: (value: Drive[] | PromiseLike<Drive[]>) => void;
+    reject: (error: any) => void;
+}
+
+interface DriveResponse {
+    id: number;
+    data?: Drive[];
+    error?: Error;
+}
+
 export interface Redump {
     name: string;
     subname?: string;
@@ -63,6 +75,12 @@ export interface Keys {
     }
 }
 
+export interface Drive {
+    description: string;
+    system: boolean;
+    mountpoints?: { path: string }[];
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -74,12 +92,14 @@ export class BrowserService {
     keys = new ReplaySubject<Keys>(1);
     private reads: ReadRequest[];
     private hashes: HashRequest[];
-    private readId: number;
+    private drives: DriveRequest[];
+    private eid: number;
 
     constructor() {
         this.reads = [];
         this.hashes = [];
-        this.readId = 0;
+        this.drives = [];
+        this.eid = 0;
 
         electron.ipcRenderer.on('getDirectoryResponse', (event: Event, directory: DirectoryResponse) => {
             if (directory.directories) {
@@ -158,6 +178,23 @@ export class BrowserService {
                 }
             }
         });
+        electron.ipcRenderer.on('drivelistResponse', (event: Event, drive: DriveResponse) => {
+            const num = this.drives.length;
+            for (let i = 0; i < num; ++i) {
+                if (this.drives[i].id === drive.id) {
+                    if (drive.error) {
+                        this.drives[i].reject(drive.error);
+                    } else {
+                        if (drive.data === undefined) {
+                            throw new Error("can't happen");
+                        }
+                        this.drives[i].resolve(drive.data);
+                    }
+                    this.drives.splice(i, 1);
+                    return;
+                }
+            }
+        });
         electron.ipcRenderer.on('readRedumpResponse', (event: Event, data: { error?: Error, games: Redump[], sectors: Uint8Array }) => {
             if (!data.error) {
                 this.redump.next(data);
@@ -177,7 +214,7 @@ export class BrowserService {
     }
 
     readPartialFile(path: string, size?: number, offset?: number): Promise<{ data: Uint8Array, size: number }> {
-        const id = this.readId++;
+        const id = this.eid++;
         return new Promise((resolve, reject) => {
             this.reads.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('readPartialFile', id, path, size, offset);
@@ -185,7 +222,7 @@ export class BrowserService {
     }
 
     readFile(path: string): Promise<{ data: Uint8Array, size: number }> {
-        const id = this.readId++;
+        const id = this.eid++;
         return new Promise((resolve, reject) => {
             this.reads.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('readFile', id, path);
@@ -193,7 +230,7 @@ export class BrowserService {
     }
 
     fetch(path: string): Promise<{ data: Uint8Array, size: number }> {
-        const id = this.readId++;
+        const id = this.eid++;
         return new Promise((resolve, reject) => {
             this.reads.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('fetch', id, path);
@@ -201,10 +238,18 @@ export class BrowserService {
     }
 
     hashFile(path: string): Promise<string> {
-        const id = this.readId++;
+        const id = this.eid++;
         return new Promise((resolve, reject) => {
             this.hashes.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('hashFile', id, path);
+        });
+    }
+
+    drivelist(): Promise<Drive[]> {
+        const id = this.eid++;
+        return new Promise((resolve, reject) => {
+            this.drives.push({ id: id, resolve: resolve, reject: reject });
+            electron.ipcRenderer.send('drivelist', id);
         });
     }
 }

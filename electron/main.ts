@@ -5,6 +5,7 @@ const fs = require('fs');
 const nodefetch = require('node-fetch');
 const nodecrypto = require('crypto');
 const hash = require('sha1-file');
+const drivelist = require('drivelist');
 
 const app = electron.app;
 const ipcMain = electron.ipcMain;
@@ -15,6 +16,19 @@ const serve = args.some(val => val === '--serve');
 type BrowserWindow = typeof electron.BrowserWindow;
 type ElectronEvent = typeof electron.Event;
 type Dirent = typeof fs.Dirent;
+
+interface DriveMount {
+    path: string;
+}
+
+interface Drive {
+    device: string;
+    displayName: string;
+    description: string;
+    size: number;
+    mountpoints?: DriveMount[];
+    system: boolean;
+}
 
 let win: BrowserWindow;
 
@@ -175,6 +189,22 @@ function unmagic(magic: number[], shift: number) {
     }
     return str;
 }
+
+ipcMain.on("drivelist", (event: ElectronEvent, id: number) => {
+    drivelist.then((list: Drive[]) => {
+        const out = [];
+        for (const drive of list) {
+            out.push({
+                description: drive.description,
+                system: drive.system,
+                mountpoints: drive.mountpoints
+            });
+        }
+        win.webContents.send("drivelistResponse", { id: id, data: out });
+    }).catch((err: Error) => {
+        win.webContents.send("drivelistResponse", { id: id, error: err });
+    });
+});
 
 ipcMain.on("navigateDirectory", (event: ElectronEvent, id: number, path: string) => {
     getDirectory(id, path);
