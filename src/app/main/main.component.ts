@@ -279,6 +279,8 @@ export class MainComponent implements OnInit, OnDestroy {
         if (match) {
             return match[1];
         }
+        console.log("cue match error");
+        console.log(str);
         throw new Error("Unable to match");
     }
 }
