@@ -150,7 +150,13 @@ export class MainComponent implements OnInit, OnDestroy {
         const sega = decoder.decode(new Uint8Array(data.buffer, offset, 16));
         if (sega.indexOf("SEGA") === 0 && sega.indexOf("SATURN") !== -1) {
             // we good
-            return decoder.decode(new Uint8Array(data.buffer, offset + 32, 32));
+            const id = decoder.decode(new Uint8Array(data.buffer, offset + 32, 32));
+            // strip out the date?
+            const cdidx = id.lastIndexOf("CD-");
+            if (cdidx !== -1) {
+                return id.substr(0, 16) + id.substr(cdidx);
+            }
+            return id;
         }
         return undefined;
     }
