@@ -348,6 +348,10 @@ ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: s
                             // boo
                             throw new Error(`bounds too small ${bounds}`);
                         }
+                        if (metadata.width < 8 || metadata.height < 8) {
+                            // boo some more
+                            throw new Error(`image width/height too small ${metadata.width}x${metadata.height}`);
+                        }
                         let w = bounds, h = bounds;
                         // width needs to be a multiple of 8
                         const ratio = metadata.width / metadata.height;
