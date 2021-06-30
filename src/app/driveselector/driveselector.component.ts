@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { BrowserService, Drive } from '../browser.service';
 import { ConfigService } from '../config.service';
 import { UsbMonitorService } from '../usb-monitor.service';
@@ -14,7 +14,7 @@ export class DriveSelectorComponent implements OnInit, OnDestroy {
     private subs: any[];
 
     constructor(private browser: BrowserService, private config: ConfigService,
-                private usb: UsbMonitorService) {
+                private usb: UsbMonitorService, private cdr: ChangeDetectorRef) {
         this.drives = [];
         this.subs = [];
     }
@@ -26,7 +26,7 @@ export class DriveSelectorComponent implements OnInit, OnDestroy {
                 this.selected = val;
         });
         let sub = this.usb.change.subscribe(() => {
-            this.refresh();
+            this.refresh(5);
         });
         this.subs.push(sub);
     }
@@ -39,16 +39,26 @@ export class DriveSelectorComponent implements OnInit, OnDestroy {
         this.selected = undefined;
     }
 
-    refresh() {
-        this.browser.drivelist().then(list => {
-            let drives: Drive[] = [];
-            for (let d of list) {
-                if (d.removable && d.mountpoints instanceof Array && d.mountpoints.length > 0) {
-                    drives.push(d);
+    refresh(retries?: number, timeout?: number) {
+        let rem = retries || 0;
+        const attempt = () => {
+            this.browser.drivelist().then(list => {
+                let drives: Drive[] = [];
+                for (let d of list) {
+                    if (d.removable && d.mountpoints instanceof Array && d.mountpoints.length > 0) {
+                        drives.push(d);
+                    }
                 }
-            }
-            this.drives = drives;
-        });
+                this.drives = drives;
+                this.cdr.detectChanges();
+
+                if (drives.length === 0 && rem > 0) {
+                    --rem;
+                    setTimeout(attempt, timeout || 1500);
+                }
+            });
+        };
+        attempt();
     }
 
     description(drive: Drive) {

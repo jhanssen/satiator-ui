@@ -32,7 +32,7 @@ export class MainComponent implements OnInit, OnDestroy {
         });
         this.subs.push(sub);
         sub = this.usb.change.subscribe(() => {
-            this.refresh();
+            this.refresh(5);
         });
         this.subs.push(sub);
         sub = this.browser.redump.subscribe((data) => {
@@ -122,29 +122,38 @@ export class MainComponent implements OnInit, OnDestroy {
         this.router.navigate(['/settings']);
     }
 
-    refresh() {
+    refresh(retries?: number, timeout?: number) {
         // find where this drive is mounted
-        this.browser.drivelist().then(drives => {
-            // find the drive device
-            let dir: string|undefined;
-            for (const drive of drives) {
-                if (drive.device === this.device) {
-                    // got it
-                    if (drive.mountpoints instanceof Array && drive.mountpoints.length > 0) {
-                        const mp = drive.mountpoints[0];
-                        if (typeof mp === "object" && typeof mp.path === "string")
-                            dir = mp.path;
+        let rem = retries || 0;
+        const attempt = () => {
+            this.browser.drivelist().then(drives => {
+                // find the drive device
+                let dir: string|undefined;
+                for (const drive of drives) {
+                    if (drive.device === this.device) {
+                        // got it
+                        if (drive.mountpoints instanceof Array && drive.mountpoints.length > 0) {
+                            const mp = drive.mountpoints[0];
+                            if (typeof mp === "object" && typeof mp.path === "string")
+                                dir = mp.path;
+                        }
+                        break;
                     }
-                    break;
                 }
-            }
-            if (dir !== undefined) {
-                this.browser.navigateDirectory(dir);
-            } else {
-                this.clear();
-                this.cdr.detectChanges();
-            }
-        });
+                if (dir !== undefined) {
+                    this.browser.navigateDirectory(dir);
+                } else {
+                    this.clear();
+                    this.cdr.detectChanges();
+
+                    if (rem > 0) {
+                        --rem;
+                        setTimeout(attempt, timeout || 1500);
+                    }
+                }
+            });
+        };
+        attempt();
     }
 
     private clear() {
