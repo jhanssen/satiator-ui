@@ -49,11 +49,11 @@ export class MainComponent implements OnInit, OnDestroy {
             for (const game of data.games) {
                 const offset = game.offset;
                 if (offset !== undefined) {
-                    const sega = this.parseSega(data.sectors, offset);
-                    if (sega === undefined) {
+                    const id = this.parseSega(data.sectors, offset);
+                    if (id === undefined) {
                         this.redump[game.serial] = game;
                     } else {
-                        this.redump[sega.id] = game;
+                        this.redump[id] = game;
                     }
                 } else {
                     this.redump[game.serial] = game;
@@ -102,9 +102,6 @@ export class MainComponent implements OnInit, OnDestroy {
             return id;
         const redump = this.redump[id];
         let name = redump.name;
-        const disc = name.indexOf("(Disc");
-        if (disc !== -1)
-            name = name.substr(0, disc - 1);
         if (redump.subname)
             name = name + ` (${redump.subname})`;
         return name;
@@ -128,7 +125,7 @@ export class MainComponent implements OnInit, OnDestroy {
             return;
         // don't add if we already have this game
         for (let g of this.games) {
-            if (g.id === game.id)
+            if (g.file === game.file)
                 return;
         }
         this.games.push(game);
@@ -149,35 +146,11 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     private parseSega(data: Uint8Array, offset: number) {
-        const parseGame = (game: string) => {
-            const space = game.indexOf(' ');
-            if (space === -1) {
-                const vv = game.lastIndexOf('V');
-                if (vv === -1)
-                    return { id: game };
-                return {
-                    id: game.substr(0, vv).trim(),
-                    version: game.substr(vv).trim()
-                };
-            }
-            return {
-                id: game.substr(0, space).trim(),
-                version: game.substr(space).trim()
-            };
-        };
-
         const decoder = new TextDecoder();
         const sega = decoder.decode(new Uint8Array(data.buffer, offset, 16));
         if (sega.indexOf("SEGA") === 0 && sega.indexOf("SATURN") !== -1) {
             // we good
-            const game = decoder.decode(new Uint8Array(data.buffer, offset + 32, 16));
-            const { id, version } = parseGame(game);
-            // console.log("got game", id, version, extractName());
-
-            return {
-                id,
-                version
-            };
+            return decoder.decode(new Uint8Array(data.buffer, offset + 32, 32));
         }
         return undefined;
     }
@@ -197,13 +170,12 @@ export class MainComponent implements OnInit, OnDestroy {
             };
         };
 
-        const sega = this.parseSega(data, offset);
-        if (sega === undefined)
+        const id = this.parseSega(data, offset);
+        if (id === undefined)
             return undefined;
         const { file: nfile, dir: ndir } = extractName();
         return {
-            id: sega.id,
-            version: sega.version,
+            id: id,
             file: nfile,
             dir: ndir
         };
