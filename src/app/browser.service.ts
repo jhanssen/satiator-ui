@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ReplaySubject } from 'rxjs';
+import { Subject, ReplaySubject } from 'rxjs';
 import { Event } from 'electron';
 const electron = (<any>window).require('electron');
 
@@ -45,10 +45,21 @@ interface ReadRequest {
     reject: (error: any) => void;
 }
 
-interface HashRequest {
+interface StringRequest {
     id: number;
     resolve: (value: string | PromiseLike<string>) => void;
     reject: (error: any) => void;
+}
+
+interface VoidRequest {
+    id: number;
+    resolve: (value: void | PromiseLike<void>) => void;
+    reject: (error: any) => void;
+}
+
+interface VoidResponse {
+    id: number;
+    error?: Error;
 }
 
 interface DriveRequest {
@@ -98,8 +109,10 @@ export class BrowserService {
     directory = new ReplaySubject<string[]>(1);
     redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>(1);
     keys = new ReplaySubject<Keys>(1);
+
     private reads: ReadRequest[];
-    private strings: HashRequest[];
+    private strings: StringRequest[];
+    private voids: VoidRequest[];
     private drives: DriveRequest[];
     private eid: number;
 
@@ -107,6 +120,7 @@ export class BrowserService {
         this.reads = [];
         this.strings = [];
         this.drives = [];
+        this.voids = [];
         this.eid = 0;
 
         electron.ipcRenderer.on('getDirectoryResponse', (event: Event, directory: DirectoryResponse) => {
@@ -203,6 +217,20 @@ export class BrowserService {
                 }
             }
         });
+        electron.ipcRenderer.on('imageToTgaResponse', (event: Event, read: VoidResponse) => {
+            const num = this.voids.length;
+            for (let i = 0; i < num; ++i) {
+                if (this.voids[i].id === read.id) {
+                    if (read.error) {
+                        this.voids[i].reject(read.error);
+                    } else {
+                        this.voids[i].resolve();
+                    }
+                    this.voids.splice(i, 1);
+                    return;
+                }
+            }
+        });
         electron.ipcRenderer.on('drivelistResponse', (event: Event, drive: DriveResponse) => {
             const num = this.drives.length;
             for (let i = 0; i < num; ++i) {
@@ -283,6 +311,14 @@ export class BrowserService {
         return new Promise((resolve, reject) => {
             this.strings.push({ id: id, resolve: resolve, reject: reject });
             electron.ipcRenderer.send('tgaToPng', id, path);
+        });
+    }
+
+    writeTga(url: string, path: string): Promise<void> {
+        const id = this.eid++;
+        return new Promise((resolve, reject) => {
+            this.voids.push({ id: id, resolve: resolve, reject: reject });
+            electron.ipcRenderer.send('imageToTga', id, url, path, 100, 100);
         });
     }
 }

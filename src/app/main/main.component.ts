@@ -110,8 +110,17 @@ export class MainComponent implements OnInit, OnDestroy {
         return name;
     }
 
+    gameDir(id: string): string|undefined {
+        for (const g of this.games) {
+            if (g.id === id) {
+                return g.dir;
+            }
+        }
+        return undefined;
+    }
+
     navigate(id: string) {
-        this.ngZone.run(() => { this.router.navigate(['/game', this.gameName(id)]) });;
+        this.ngZone.run(() => { this.router.navigate(['/game', this.gameName(id), this.gameDir(id)]) });;
     }
 
     private addGame(game: Game | undefined) {

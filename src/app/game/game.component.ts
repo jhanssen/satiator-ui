@@ -11,6 +11,7 @@ import { BrowserService } from '../browser.service';
 })
 export class GameComponent implements OnInit, OnDestroy {
     name: string;
+    directory: string|undefined;
     images: ScrapeResponse;
     selected: string;
     private scraper: ScraperService | undefined;
@@ -33,6 +34,7 @@ export class GameComponent implements OnInit, OnDestroy {
         });
         let sub = this.route.params.subscribe(params => {
             this.name = params['name'];
+            this.directory = params['dir'];
             if (this.scraper)
                 this.scrape();
         });
@@ -61,6 +63,12 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     save() {
+        if (this.directory && this.selected.length > 0) {
+            console.log("writing tga", this.selected, this.directory);
+            this.browser.writeTga(this.selected, this.directory + "/BOX.TGA").then(() => {
+            }).catch(err => {});
+        }
+        this.router.navigate(['/']);
     }
 
     cancel() {
