@@ -14,6 +14,7 @@ export class GameComponent implements OnInit, OnDestroy {
     directory: string|undefined;
     images: ScrapeResponse;
     selected: string;
+    message: string;
     private scraper: ScraperService | undefined;
     private subs: any[];
 
@@ -25,11 +26,13 @@ export class GameComponent implements OnInit, OnDestroy {
             candidates: []
         };
         this.subs = [];
+        this.message = "scraping";
     }
 
     ngOnInit(): void {
         selectScraperService(this.config, this.browser).then(scraper => {
             this.scraper = scraper;
+            this.message = `scraping from ${scraper.name()}`;
             this.scrape();
         });
         let sub = this.route.params.subscribe(params => {
@@ -95,6 +98,12 @@ export class GameComponent implements OnInit, OnDestroy {
         this.scraper.scrape({ name: name }).then(data => {
             // console.log("hoo", data);
             this.images = data;
-        }).catch(e => {});
+            if (!this.hasImages()) {
+                this.message = `no images found`;
+            }
+        }).catch(e => {
+            this.message = `scrape error, rate limited?`;
+            console.log("scrape error", e);
+        });
     }
 }
