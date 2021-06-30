@@ -153,7 +153,7 @@ export class MainComponent implements OnInit, OnDestroy {
             const id = decoder.decode(new Uint8Array(data.buffer, offset + 32, 32));
             // strip out the date?
             const cdidx = id.lastIndexOf("CD-");
-            if (cdidx !== -1) {
+            if (cdidx >= 16) {
                 return id.substr(0, 16) + id.substr(cdidx);
             }
             return id;
