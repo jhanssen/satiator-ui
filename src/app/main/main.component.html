@@ -6,7 +6,8 @@
 	  satiator-ui
 	</span>
 	<span>
-	  <a href="/settings"><mat-icon>settings</mat-icon></a>
+	  <button mat-button (click)="refresh()" aria-label="Refresh drives"><mat-icon>refresh</mat-icon></button>
+	  <button mat-button (click)="settings()" aria-label="Settings"><mat-icon>settings</mat-icon></button>
 	</span>
       </div>
     </mat-toolbar-row>

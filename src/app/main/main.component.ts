@@ -115,7 +115,11 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     navigate(id: string) {
-        this.ngZone.run(() => { this.router.navigate(['/game', this.gameName(id), this.gameDir(id)]) });;
+        this.ngZone.run(() => { this.router.navigate(['/game', this.gameName(id), this.gameDir(id)]) });
+    }
+
+    settings() {
+        this.router.navigate(['/settings']);
     }
 
     refresh() {
