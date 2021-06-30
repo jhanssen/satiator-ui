@@ -370,15 +370,17 @@ ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: s
                                 h -= (m * ratio);
                             }
                         }
-                        return image.resize(Math.floor(w), Math.floor(h));
-                    }).ensureAlpha()
-                    .raw()
-                    .toBuffer((err: Error, data: Buffer, info: any) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(TGA.createTgaBuffer(info.width, info.height, data));
-                        }
+                        return image
+                            .resize(Math.floor(w), Math.floor(h))
+                            .ensureAlpha()
+                            .raw()
+                            .toBuffer((err: Error, data: Buffer, info: any) => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve(TGA.createTgaBuffer(info.width, info.height, data));
+                                }
+                            });
                     });
             });
         }).then((buffer: Buffer) => {
