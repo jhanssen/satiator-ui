@@ -1,7 +1,4 @@
 <div class="drives">
-  <div>
-    Drive
-  </div>
   <mat-form-field appearance="fill">
     <mat-select [(value)]="selected">
       <mat-option *ngFor="let drive of drives" [value]="drive.device">{{ description(drive) }}</mat-option>

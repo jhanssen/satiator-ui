@@ -4,17 +4,26 @@
       {{ this.current }}
     </mat-toolbar-row>
   </mat-toolbar>
-  <div class="scraper">
+  <div class="settings">
     <div>
-      Scraper
+      <div>
+	Scraper
+      </div>
+      <div class="scraper">
+	<mat-form-field appearance="fill">
+	  <mat-select [(value)]="scraper">
+	    <mat-option *ngFor="let scraper of scrapers" [value]="scraper">{{ scraper }}</mat-option>
+	  </mat-select>
+	</mat-form-field>
+      </div>
+      <div>
+	Drive
+      </div>
+      <div>
+	<app-driveselector #driveselector></app-driveselector>
+      </div>
     </div>
-    <mat-form-field appearance="fill">
-      <mat-select [(value)]="scraper">
-	<mat-option *ngFor="let scraper of scrapers" [value]="scraper">{{ scraper }}</mat-option>
-      </mat-select>
-    </mat-form-field>
   </div>
-  <app-driveselector #driveselector></app-driveselector>
   <mat-toolbar color="accent">
     <mat-toolbar-row>
       <div class="buttons">

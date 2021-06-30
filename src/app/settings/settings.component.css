@@ -4,3 +4,5 @@ div.button { margin: 10px; }
 div.scroll { overflow-y: scroll; flex: 2 }
 div.scraper { margin: 10px; max-width: 500px; display: flex; flex-direction: row; align-items: center; }
 div.scraper > div { margin: 10px; margin-right: 20px; }
+div.settings { display: flex; width: 100%; justify-content: center; }
+div.settings > div { display: grid; grid-template-columns: 100px 400px; grid-template-rows: auto; align-items: center; }
