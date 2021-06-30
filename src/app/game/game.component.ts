@@ -14,7 +14,7 @@ export class GameComponent implements OnInit, OnDestroy {
     directory: string|undefined;
     images: ScrapeResponse;
     selected: string;
-    message: string;
+    message: string|undefined;
     private scraper: ScraperService | undefined;
     private subs: any[];
 
@@ -26,10 +26,10 @@ export class GameComponent implements OnInit, OnDestroy {
             candidates: []
         };
         this.subs = [];
-        this.message = "scraping";
     }
 
     ngOnInit(): void {
+        this.message = "scraping";
         selectScraperService(this.config, this.browser).then(scraper => {
             this.scraper = scraper;
             this.message = `scraping from ${scraper.name()}`;
