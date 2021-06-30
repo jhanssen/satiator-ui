@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angula
 import { Router } from '@angular/router';
 import { BrowserService, Redump } from '../browser.service';
 import { ConfigService } from '../config.service';
+import { UsbMonitorService } from '../usb-monitor.service';
 import { Game } from '../game.interface';
 
 @Component({
@@ -13,34 +14,25 @@ export class MainComponent implements OnInit, OnDestroy {
     games: Game[];
     redump: { [key: string]: Redump } | undefined;
     private subs: any[];
+    private device: string|undefined;
 
     constructor(private browser: BrowserService, private config: ConfigService,
-                private cdr: ChangeDetectorRef, private router: Router, private ngZone: NgZone) {
+                private usb: UsbMonitorService, private cdr: ChangeDetectorRef,
+                private router: Router, private ngZone: NgZone) {
         this.games = [];
         this.subs = [];
     }
 
     ngOnInit(): void {
         let sub = this.config.getValue("drive").subscribe(device => {
-            // find where this drive is mounted
-            this.browser.drivelist().then(drives => {
-                // find the drive device
-                let dir: string|undefined;
-                for (const drive of drives) {
-                    if (drive.device === device) {
-                        // got it
-                        if (drive.mountpoints instanceof Array && drive.mountpoints.length > 0) {
-                            const mp = drive.mountpoints[0];
-                            if (typeof mp === "object" && typeof mp.path === "string")
-                                dir = mp.path;
-                        }
-                        break;
-                    }
-                }
-                if (dir !== undefined) {
-                    this.browser.navigateDirectory(dir);
-                }
-            });
+            if (typeof device === "string" || device === undefined) {
+                this.device = device;
+                this.refresh();
+            }
+        });
+        this.subs.push(sub);
+        sub = this.usb.change.subscribe(() => {
+            this.refresh();
         });
         this.subs.push(sub);
         sub = this.browser.redump.subscribe((data) => {
@@ -124,6 +116,35 @@ export class MainComponent implements OnInit, OnDestroy {
 
     navigate(id: string) {
         this.ngZone.run(() => { this.router.navigate(['/game', this.gameName(id), this.gameDir(id)]) });;
+    }
+
+    refresh() {
+        // find where this drive is mounted
+        this.browser.drivelist().then(drives => {
+            // find the drive device
+            let dir: string|undefined;
+            for (const drive of drives) {
+                if (drive.device === this.device) {
+                    // got it
+                    if (drive.mountpoints instanceof Array && drive.mountpoints.length > 0) {
+                        const mp = drive.mountpoints[0];
+                        if (typeof mp === "object" && typeof mp.path === "string")
+                            dir = mp.path;
+                    }
+                    break;
+                }
+            }
+            if (dir !== undefined) {
+                this.browser.navigateDirectory(dir);
+            } else {
+                this.clear();
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    private clear() {
+        this.games = [];
     }
 
     private addGame(game: Game | undefined) {

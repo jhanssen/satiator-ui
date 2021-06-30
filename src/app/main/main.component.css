@@ -7,3 +7,4 @@ div.scroll { overflow-y: scroll; flex: 2 }
 div.horiz { height: auto; display: flex; flex-direction: row; justify-content: space-between; width: 100%; align-items: center; }
 div.list { margin: 20px; }
 div.game { cursor: pointer; font-size: 1.3em; }
+div.empty { flex: 2; font-size: 2em; color: #888; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }

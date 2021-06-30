@@ -5,7 +5,7 @@
         "ng": "ng",
         "start": "npm-run-all -p electron:serve ng:serve",
         "build": "ng build",
-        "rebuild:native": "electron-rebuild -w drivelist,sharp",
+        "rebuild:native": "electron-rebuild -w drivelist,sharp,usb-detection",
         "test": "ng test",
         "lint": "ng lint",
         "e2e": "ng e2e",
@@ -32,6 +32,7 @@
         "sharp": "^0.28.3",
         "tga": "^1.0.4",
         "tslib": "^2.0.0",
+        "usb-detection": "^4.10.0",
         "zone.js": "~0.11.3"
     },
     "devDependencies": {

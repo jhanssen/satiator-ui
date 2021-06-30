@@ -8,6 +8,7 @@ const hash = require('sha1-file');
 const drivelist = require('drivelist');
 const TGA = require('tga');
 const sharp = require('sharp');
+const usbDetect = require('usb-detection');
 
 const app = electron.app;
 const ipcMain = electron.ipcMain;
@@ -63,9 +64,23 @@ function onReady () {
             slashes: true
         }));
     }
+
+    usbDetect.startMonitoring();
+    usbDetect.on('add', (device: any) => {
+        win.webContents.send("usb", { type: "add", device: device });
+    });
+    usbDetect.on('remove', (device: any) => {
+        win.webContents.send("usb", { type: "remove", device: device });
+    });
+    usbDetect.on('change', (device: any) => {
+        win.webContents.send("usb", { type: "change", device: device });
+    });
 }
 
 app.on('ready', onReady);
+app.on('quit', () => {
+    usbDetect.stopMonitoring();
+});
 
 let currentDir = process.cwd();
 let getDirectoryReqs: string[] = [];

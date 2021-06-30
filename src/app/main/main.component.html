@@ -11,7 +11,7 @@
       </div>
     </mat-toolbar-row>
   </mat-toolbar>
-  <div class="scroll">
+  <div *ngIf="games.length > 0" class="scroll">
     <div *ngFor="let game of games" class="list">
       <div class="horiz">
 	<div (click)="navigate(game.id)" class="game">
@@ -21,6 +21,11 @@
 	  <img [src]="game.tga" />
 	</div>
       </div>
+    </div>
+  </div>
+  <div *ngIf="games.length === 0" class="empty">
+    <div>
+      No games, insert drive and/or select drive in settings
     </div>
   </div>
 </div>

@@ -1,18 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BrowserService, Drive } from '../browser.service';
 import { ConfigService } from '../config.service';
+import { UsbMonitorService } from '../usb-monitor.service';
 
 @Component({
     selector: 'app-driveselector',
     templateUrl: './driveselector.component.html',
     styleUrls: ['./driveselector.component.css']
 })
-export class DriveSelectorComponent implements OnInit {
+export class DriveSelectorComponent implements OnInit, OnDestroy {
     drives: Drive[];
     selected: string|undefined;
+    private subs: any[];
 
-    constructor(private browser: BrowserService, private config: ConfigService) {
+    constructor(private browser: BrowserService, private config: ConfigService,
+                private usb: UsbMonitorService) {
         this.drives = [];
+        this.subs = [];
     }
 
     ngOnInit(): void {
@@ -21,9 +25,17 @@ export class DriveSelectorComponent implements OnInit {
             if (typeof val === "string")
                 this.selected = val;
         });
+        let sub = this.usb.change.subscribe(() => {
+            this.refresh();
+        });
+        this.subs.push(sub);
     }
 
     ngOnDestroy(): void {
+        for (let d of this.subs) {
+            d.unsubscribe();
+        }
+        this.subs = [];
         this.selected = undefined;
     }
 
