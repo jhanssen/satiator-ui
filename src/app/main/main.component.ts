@@ -85,6 +85,12 @@ export class MainComponent implements OnInit, OnDestroy {
             });
         });
         this.subs.push(sub);
+        sub = this.browser.tga.subscribe(() => {
+            for (const g of this.games) {
+                this.readTga(g);
+            }
+        });
+        this.subs.push(sub);
     }
 
     ngOnDestroy(): void {
@@ -136,6 +142,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
         // attempt to fetch TGA
         // console.log("want to fetch tga", game.file, game.dir);
+        this.readTga(game);
+    }
+
+    private readTga(game: Game) {
         if (game.dir) {
             const tga = game.dir + "/BOX.TGA";
             this.browser.readTga(tga).then(png => {

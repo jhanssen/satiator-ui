@@ -109,6 +109,7 @@ export class BrowserService {
     directory = new ReplaySubject<string[]>(1);
     redump = new ReplaySubject<{ games: Redump[], sectors: Uint8Array }>(1);
     keys = new ReplaySubject<Keys>(1);
+    tga = new Subject();
 
     private reads: ReadRequest[];
     private strings: StringRequest[];
@@ -227,9 +228,11 @@ export class BrowserService {
                         this.voids[i].resolve();
                     }
                     this.voids.splice(i, 1);
+                    this.tga.next();
                     return;
                 }
             }
+            this.tga.next();
         });
         electron.ipcRenderer.on('drivelistResponse', (event: Event, drive: DriveResponse) => {
             const num = this.drives.length;
