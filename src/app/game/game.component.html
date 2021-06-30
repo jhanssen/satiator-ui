@@ -4,11 +4,16 @@
       {{ name }}
     </mat-toolbar-row>
   </mat-toolbar>
-  <div class="scroll">
+  <div *ngIf="hasImages()" class="scroll">
     <div class="wrapper">
       <div *ngFor="let image of images.candidates" (click)="select(image.image)" [class]="className(image.image)">
 	<img [src]="image.image" width="150" onerror="this.parentNode.style.display='none'" class="pad" />
       </div>
+    </div>
+  </div>
+  <div *ngIf="!hasImages()" class="empty">
+    <div>
+      scraping from {{ scraperName() }}
     </div>
   </div>
   <mat-toolbar color="accent">

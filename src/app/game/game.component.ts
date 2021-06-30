@@ -58,8 +58,18 @@ export class GameComponent implements OnInit, OnDestroy {
         this.selected = name;
     }
 
+    hasImages() {
+        return this.images.primary !== undefined || this.images.candidates.length > 0;
+    }
+
     className(name: string) {
         return name === this.selected ? "selected" : "normal";
+    }
+
+    scraperName() {
+        if (!this.scraper)
+            return undefined;
+        return this.scraper.name();
     }
 
     save() {

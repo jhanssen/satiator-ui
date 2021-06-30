@@ -21,6 +21,7 @@ export abstract class ScraperService {
     constructor(protected browserService: BrowserService) { }
 
     abstract scrape(request: ScrapeRequest): Promise<ScrapeResponse>;
+    abstract name(): string;
 }
 
 class ScraperGoogleService extends ScraperService {
@@ -47,6 +48,10 @@ class ScraperGoogleService extends ScraperService {
                 });
             });
         });
+    }
+
+    name() {
+        return "google";
     }
 }
 
@@ -105,6 +110,10 @@ class ScraperTheGamesDbService extends ScraperService {
                 });
             });
         });
+    }
+
+    name() {
+        return "thegamesdb";
     }
 }
 

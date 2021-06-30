@@ -17,5 +17,6 @@ div.height { display: flex; flex-direction: column; justify-content: space-betwe
 div.buttons { display: flex; }
 div.button { margin: 10px; }
 div.scroll { overflow-y: scroll; flex: 2 }
+div.empty { flex: 2; font-size: 2em; color: #888; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 
 img { cursor: pointer; }
