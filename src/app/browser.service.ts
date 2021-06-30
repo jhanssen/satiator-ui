@@ -321,7 +321,7 @@ export class BrowserService {
         const id = this.eid++;
         return new Promise((resolve, reject) => {
             this.voids.push({ id: id, resolve: resolve, reject: reject });
-            electron.ipcRenderer.send('imageToTga', id, url, path, 100, 100);
+            electron.ipcRenderer.send('imageToTga', id, url, path, 100);
         });
     }
 }

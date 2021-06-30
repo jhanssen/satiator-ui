@@ -332,7 +332,7 @@ ipcMain.on("tgaToPng", (event: ElectronEvent, id: number, data: string|Uint8Arra
     }
 });
 
-ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: string, width: number, height?: number) => {
+ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: string, bounds: number) => {
     let wfile = file;
     if (wfile[0] !== '/')
         wfile = path.resolve(currentDir, wfile);
@@ -340,9 +340,38 @@ ipcMain.on("imageToTga", (event: ElectronEvent, id: number, url: string, file: s
         .then((res: any) => res.buffer())
         .then((buffer: Buffer) => {
             return new Promise<Buffer>((resolve, reject) => {
-                sharp(buffer)
-                    .resize(width, height, { fit: 'inside' })
-                    .ensureAlpha()
+                const image = sharp(buffer);
+                image
+                    .metadata()
+                    .then((metadata: { width: number, height: number }) => {
+                        if (bounds < 8) {
+                            // boo
+                            throw new Error(`bounds too small ${bounds}`);
+                        }
+                        let w = bounds, h = bounds;
+                        // width needs to be a multiple of 8
+                        const ratio = metadata.width / metadata.height;
+                        if (ratio >= 1) {
+                            // width > height
+                            h = w / ratio;
+                            const m = w % 8;
+                            if (m > 0) {
+                                // need to fix the width
+                                w -= m;
+                                // adjust height as well
+                                h -= (m / ratio);
+                            }
+                        } else {
+                            // height > width
+                            w = h * ratio;
+                            const m = w % 8;
+                            if (m > 0) {
+                                w -= m;
+                                h -= (m * ratio);
+                            }
+                        }
+                        return image.resize(Math.floor(w), Math.floor(h));
+                    }).ensureAlpha()
                     .raw()
                     .toBuffer((err: Error, data: Buffer, info: any) => {
                         if (err) {
