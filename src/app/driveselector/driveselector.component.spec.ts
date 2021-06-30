@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FileBrowserComponent } from './browser.component';
+import { DriveSelectorComponent } from './driveselector.component';
 
-describe('FileBrowserComponent', () => {
-  let component: FileBrowserComponent;
-  let fixture: ComponentFixture<FileBrowserComponent>;
+describe('DriveSelectorComponent', () => {
+  let component: DriveSelectorComponent;
+  let fixture: ComponentFixture<DriveSelectorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ FileBrowserComponent ]
+      declarations: [ DriveSelectorComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FileBrowserComponent);
+    fixture = TestBed.createComponent(DriveSelectorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

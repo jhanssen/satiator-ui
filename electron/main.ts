@@ -19,6 +19,7 @@ type Dirent = typeof fs.Dirent;
 
 interface DriveMount {
     path: string;
+    label?: string;
 }
 
 interface Drive {
@@ -27,7 +28,8 @@ interface Drive {
     description: string;
     size: number;
     mountpoints?: DriveMount[];
-    system: boolean;
+    isSystem: boolean;
+    isRemovable: boolean;
 }
 
 let win: BrowserWindow;
@@ -191,12 +193,14 @@ function unmagic(magic: number[], shift: number) {
 }
 
 ipcMain.on("drivelist", (event: ElectronEvent, id: number) => {
-    drivelist.then((list: Drive[]) => {
+    drivelist.list().then((list: Drive[]) => {
         const out = [];
         for (const drive of list) {
             out.push({
+                device: drive.device,
                 description: drive.description,
-                system: drive.system,
+                system: drive.isSystem,
+                removable: drive.isRemovable,
                 mountpoints: drive.mountpoints
             });
         }

@@ -21,11 +21,26 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        let sub = this.config.getValue("directory").subscribe(dir => {
-            console.log("got dir", dir);
-            if (typeof dir === "string") {
-                this.browserService.navigateDirectory(dir);
-            }
+        let sub = this.config.getValue("drive").subscribe(device => {
+            // find where this drive is mounted
+            this.browserService.drivelist().then(drives => {
+                // find the drive device
+                let dir: string|undefined;
+                for (const drive of drives) {
+                    if (drive.device === device) {
+                        // got it
+                        if (drive.mountpoints instanceof Array && drive.mountpoints.length > 0) {
+                            const mp = drive.mountpoints[0];
+                            if (typeof mp === "object" && typeof mp.path === "string")
+                                dir = mp.path;
+                        }
+                        break;
+                    }
+                }
+                if (dir !== undefined) {
+                    this.browserService.navigateDirectory(dir);
+                }
+            });
         });
         this.subs.push(sub);
         sub = this.browserService.redump.subscribe((data) => {
@@ -108,6 +123,10 @@ export class MainComponent implements OnInit, OnDestroy {
                 return;
         }
         this.games.push(game);
+        // sort the list
+        this.games.sort((a, b) => {
+            return a.id.localeCompare(b.id);
+        });
     }
 
     private parseSega(data: Uint8Array, offset: number) {
@@ -145,6 +164,10 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     private parseSegaFile(file: string, data: Uint8Array, offset: number) {
+        // ignore autoboot
+        if (file.toLowerCase().endsWith("autoboot.iso"))
+            return undefined;
+
         const extractName = () => {
             const slash = file.lastIndexOf('/');
             if (slash === -1)

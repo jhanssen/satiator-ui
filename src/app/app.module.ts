@@ -3,7 +3,6 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { FileBrowserComponent } from './filebrowser/filebrowser.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MainComponent } from './main/main.component';
 import { SettingsComponent } from './settings/settings.component';
@@ -15,14 +14,15 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { DriveSelectorComponent } from './driveselector/driveselector.component';
 
 @NgModule({
     declarations: [
         AppComponent,
-        FileBrowserComponent,
         MainComponent,
         SettingsComponent,
-        GameComponent
+        GameComponent,
+        DriveSelectorComponent
     ],
     imports: [
         BrowserModule,

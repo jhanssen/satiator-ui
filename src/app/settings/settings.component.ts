@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
-import { FileBrowserComponent } from '../filebrowser/filebrowser.component';
+import { DriveSelectorComponent } from '../driveselector/driveselector.component';
 import { BrowserService } from '../browser.service';
 import { ConfigService } from '../config.service';
 import { Router } from '@angular/router';
@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
     styleUrls: ['./settings.component.css']
 })
 export class SettingsComponent implements OnInit, OnDestroy {
-    @ViewChild('filebrowser') filebrowser!: FileBrowserComponent;
+    @ViewChild('driveselector') driveselector!: DriveSelectorComponent;
     current: string|undefined;
     scraper: string;
     scrapers: string[] = ["google", "thegamesdb"];
@@ -48,13 +48,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     save() {
-        this.filebrowser.save();
+        this.driveselector.save();
         this.router.navigate(['/']);
         this.config.setValue("scraper", this.scraper);
     }
 
     cancel() {
-        this.filebrowser.cancel();
         this.router.navigate(['/']);
     }
 }

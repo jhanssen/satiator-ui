@@ -76,9 +76,11 @@ export interface Keys {
 }
 
 export interface Drive {
+    device: string;
     description: string;
     system: boolean;
-    mountpoints?: { path: string }[];
+    removable: boolean;
+    mountpoints?: { path: string, label?: string }[];
 }
 
 @Injectable({
