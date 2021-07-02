@@ -4,6 +4,7 @@ import { BrowserService, Redump } from '../browser.service';
 import { ConfigService } from '../config.service';
 import { UsbMonitorService } from '../usb-monitor.service';
 import { Game } from '../game.interface';
+import { parse as parseCue } from '@jhanssen/cue-parser';
 
 @Component({
   selector: 'app-main',
@@ -272,15 +273,26 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     private parseCueFile(data: Uint8Array) {
-        const str = (new TextDecoder()).decode(data);
-        // assume that track 01 is first?
-        const rx = /FILE\s+\"([^\"]+)\"\s+BINARY/;
-        const match = rx.exec(str);
-        if (match) {
-            return match[1];
+        const cue = parseCue(data, "utf-8");
+        if (!cue.files) {
+            throw new Error("No file entries in cue file");
         }
-        console.log("cue match error");
-        console.log(str);
-        throw new Error("Unable to match");
+        // we'd like the file name of track 1
+        for (const file of cue.files) {
+            if (!file.tracks)
+                continue;
+            for (const track of file.tracks) {
+                if (track.number === 1) {
+                    if (!file.name) {
+                        console.error("track parse error", file, track);
+                        throw new Error("No file name for file with track 01");
+                    }
+                    return file.name;
+                }
+            }
+        }
+        console.log("cue file match error");
+        console.log((new TextDecoder("utf8")).decode(data));
+        throw new Error("No track 1 in cue");
     }
 }
