@@ -7,32 +7,32 @@
   <div class="settings">
     <div>
       <div>
-	Scraper
+        Scraper
       </div>
       <div class="scraper">
-	<mat-form-field appearance="fill">
-	  <mat-select [(value)]="scraper">
-	    <mat-option *ngFor="let scraper of scrapers" [value]="scraper">{{ scraper }}</mat-option>
-	  </mat-select>
-	</mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-select [(value)]="scraper">
+            <mat-option *ngFor="let scraper of scrapers" [value]="scraper">{{ scraper }}</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
       <div>
-	Drive
+        Drive
       </div>
       <div>
-	<app-driveselector #driveselector></app-driveselector>
+        <app-driveselector #driveselector></app-driveselector>
       </div>
     </div>
   </div>
   <mat-toolbar color="accent">
     <mat-toolbar-row>
       <div class="buttons">
-	<div class="button">
-	  <button mat-raised-button color="primary" (click)="save()">OK</button>
-	</div>
-	<div class="button">
-	  <button mat-raised-button (click)="cancel()">Cancel</button>
-	</div>
+        <div class="button">
+          <button mat-raised-button color="primary" (click)="save()">OK</button>
+        </div>
+        <div class="button">
+          <button mat-raised-button (click)="cancel()">Cancel</button>
+        </div>
       </div>
     </mat-toolbar-row>
   </mat-toolbar>

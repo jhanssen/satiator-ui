@@ -2,25 +2,25 @@
   <mat-toolbar color="accent">
     <mat-toolbar-row>
       <div class="flex">
-	<span>
-	  satiator-ui
-	</span>
-	<span>
-	  <button mat-button (click)="refresh()" aria-label="Refresh drives"><mat-icon>refresh</mat-icon></button>
-	  <button mat-button (click)="settings()" aria-label="Settings"><mat-icon>settings</mat-icon></button>
-	</span>
+        <span>
+          satiator-ui
+        </span>
+        <span>
+          <button mat-button (click)="refresh()" aria-label="Refresh drives"><mat-icon>refresh</mat-icon></button>
+          <button mat-button (click)="settings()" aria-label="Settings"><mat-icon>settings</mat-icon></button>
+        </span>
       </div>
     </mat-toolbar-row>
   </mat-toolbar>
   <div *ngIf="games.length > 0" class="scroll">
     <div *ngFor="let game of games" class="list">
       <div class="horiz">
-	<div (click)="navigate(game.id)" class="game">
-	  {{ gameName(game.id) }}
-	</div>
-	<div>
-	  <img [src]="game.tga" />
-	</div>
+        <div (click)="navigate(game.id)" class="game">
+          {{ gameName(game.id) }}
+        </div>
+        <div>
+          <img [src]="game.tga" />
+        </div>
       </div>
     </div>
   </div>
